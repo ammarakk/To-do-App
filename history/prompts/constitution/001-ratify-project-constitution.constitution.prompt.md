@@ -1,44 +1,33 @@
-<!--
-SYNC IMPACT REPORT
-Version Change: Template → 2.1.0
-Initial constitution ratification for AI-Native Todo Evolution Project
+---
+id: 001
+title: Ratify Project Constitution
+stage: constitution
+date: 2025-12-31
+surface: agent
+model: claude-sonnet-4-5
+feature: none
+branch: master
+user: Ammar Ahmed Khan
+command: /sp.constitution
+labels: ["constitution", "governance", "phase-i", "sdd"]
+links:
+  spec: null
+  ticket: null
+  adr: null
+  pr: null
+files:
+  - .specify/memory/constitution.md
+tests:
+  - null
+---
 
-Principles Defined:
-- Spec First (Absolute Rule)
-- Agent-Only Execution (Mandatory)
-- Phase Locking
-- AI Discipline
-- Human Role
+## Prompt
 
-Sections Added:
-- Purpose
-- Core Rules (5 principles)
-- Phase Governance
-- Phase Overview
-- Phase I Constitution (Active)
-- Three-Tier Architecture
-- Claude Code Agent Architecture
-- Subagents
-- Skills
-- Reusability Enforcement
-- Claude Code Continuity Rules
-- Environment Rules
-- Repository Structure
-- Git Workflow
-- Out of Scope
-- Authority
-- Status
+```text
+/sp.constitution
 
-Templates Status:
-- `.specify/templates/plan-template.md` - ⚠ pending review
-- `.specify/templates/spec-template.md` - ⚠ pending review
-- `.specify/templates/tasks-template.md` - ⚠ pending review
-- `.specify/templates/commands/*.md` - ⚠ pending review
-
-Follow-up TODOs: None
--->
-
-# AI-Native Todo Evolution Project Constitution
+# PROJECT CONSTITUTION
+AI-Native, Agent-Orchestrated, Spec-Driven Todo Evolution Project
 
 Version: 2.1
 Status: Phase I Active
@@ -63,35 +52,28 @@ This document is the single source of truth.
 
 ---
 
-## 2. Core Principles
+## 2. Core Rules
 
-### I. Spec First (Absolute Rule)
-
+### 2.1 Spec First (Absolute Rule)
 - No code is written or generated without an approved spec
-- Specs MUST be written in Markdown
-- Specs live in `/specs`
+- Specs must be written in Markdown
+- Specs live in /specs
 - Specs are produced only by the Spec Agent
 - Implementation without a spec is forbidden
 
-**Rationale**: Ensures all work is intentional, traceable, and approved before execution.
-
-### II. Agent-Only Execution (Mandatory)
-
-- All project work MUST be performed by agents
-- Claude Code MUST never:
+### 2.2 Agent-Only Execution (Mandatory)
+- All project work must be performed by agents
+- Claude Code must never:
   - Generate code directly in a single response
   - Bypass agents, subagents, or skills
-- Every output MUST be traceable to:
+- Every output must be traceable to:
   - An agent
   - One or more subagents
   - One or more reusable skills
 
 Direct AI-to-code generation is forbidden.
 
-**Rationale**: Enforces modularity, reusability, and prevents ad-hoc code generation.
-
-### III. Phase Locking
-
+### 2.3 Phase Locking
 - Only one phase may be active at a time
 - Completed phases are locked permanently
 - Past phases cannot be edited
@@ -99,19 +81,13 @@ Direct AI-to-code generation is forbidden.
   - A new phase, or
   - A migration spec
 
-**Rationale**: Prevents regression and ensures forward-only progress with clear boundaries.
-
-### IV. AI Discipline
-
-- Claude Code MUST NOT assume requirements
-- Claude Code MUST stop and ask when unclear
+### 2.4 AI Discipline
+- Claude Code must not assume requirements
+- Claude Code must stop and ask when unclear
 - Partial, stubbed, or placeholder implementations are forbidden
-- Every decision MUST be spec-backed
+- Every decision must be spec-backed
 
-**Rationale**: Eliminates ambiguity and ensures human authority over all decisions.
-
-### V. Human Role
-
+### 2.5 Human Role
 - Human acts as System Architect & Authority
 - Human approves:
   - Specs
@@ -119,14 +95,11 @@ Direct AI-to-code generation is forbidden.
   - Validation outcomes
 - Claude Code acts as Executor only
 
-**Rationale**: Maintains human oversight and decision-making authority.
-
 ---
 
 ## 3. Phase Governance
 
 ### 3.1 Phase Lifecycle (Agent-Enforced)
-
 1. Orchestrator Agent loads phase rules
 2. Spec Agent produces specs
 3. Implementation Agent coordinates subagents
@@ -134,7 +107,6 @@ Direct AI-to-code generation is forbidden.
 5. Orchestrator Agent locks phase
 
 ### 3.2 Phase Status
-
 - Phase I: Active
 - Phase II–V: Defined but Locked
 
@@ -142,11 +114,11 @@ Direct AI-to-code generation is forbidden.
 
 ## 4. Phase Overview
 
-**Phase I** – In-Memory Python Console App
-**Phase II** – Full-Stack Web Application
-**Phase III** – AI-Powered Chatbot
-**Phase IV** – Local Kubernetes Deployment
-**Phase V** – Cloud-Native Deployment
+Phase I  – In-Memory Python Console App
+Phase II – Full-Stack Web Application
+Phase III – AI-Powered Chatbot
+Phase IV – Local Kubernetes Deployment
+Phase V  – Cloud-Native Deployment
 
 Only Phase I rules apply currently.
 
@@ -155,7 +127,6 @@ Only Phase I rules apply currently.
 ## 5. Phase I Constitution (Active)
 
 ### 5.1 Scope
-
 - Python console application
 - In-memory data only
 - No database
@@ -164,7 +135,6 @@ Only Phase I rules apply currently.
 - No AI chatbot
 
 ### 5.2 Allowed Features
-
 - Add task
 - Update task
 - Delete task
@@ -172,7 +142,6 @@ Only Phase I rules apply currently.
 - Mark task as complete
 
 ### 5.3 Forbidden
-
 - Web frameworks
 - Databases
 - External APIs
@@ -186,19 +155,16 @@ Only Phase I rules apply currently.
 ## 6. Three-Tier Architecture (Conceptual)
 
 ### Presentation Tier
-
 - Console input/output only
 - Handled by Presentation Subagents
 
 ### Application Tier
-
 - Business logic
 - Validation
 - Task lifecycle rules
 - Handled by Logic Subagents and Skills
 
 ### Data Tier
-
 - In-memory structures only
 - Handled by State Subagents
 
@@ -208,21 +174,21 @@ Only Phase I rules apply currently.
 
 ### 7.1 Core Agents
 
-**Orchestrator Agent**
+Orchestrator Agent
 - Reads and enforces this constitution
 - Loads active phase
 - Delegates work
 - Stops execution on violations
 
-**Spec Agent**
+Spec Agent
 - Produces specs only
 - No code generation
 
-**Implementation Agent**
+Implementation Agent
 - Coordinates subagents and skills
 - Assembles implementation from reusable units
 
-**Validation Agent**
+Validation Agent
 - Verifies spec compliance
 - Verifies phase compliance
 - Approves or rejects completion
@@ -232,33 +198,31 @@ Only Phase I rules apply currently.
 ## 8. Subagents
 
 ### 8.1 Rules
-
 - Stateless
 - Single responsibility
 - Reusable across phases
 - Perform all concrete work
 
-**Examples:**
+Examples:
 - TaskCreationSubagent
 - TaskUpdateSubagent
 - InputParsingSubagent
 - StateMutationSubagent
 - OutputRenderingSubagent
 
-Subagents MUST NOT own state or make architectural decisions.
+Subagents must not own state or make architectural decisions.
 
 ---
 
 ## 9. Skills
 
 ### 9.1 Rules
-
 - Pure and deterministic
 - Phase-agnostic
 - Reusable across projects
 - Callable only by agents or subagents
 
-**Examples:**
+Examples:
 - ValidateTaskFields
 - NormalizeConsoleInput
 - EnforcePhaseRules
@@ -269,9 +233,9 @@ Subagents MUST NOT own state or make architectural decisions.
 
 ## 10. Reusability Enforcement
 
-- All agents, subagents, and skills MUST be reusable
+- All agents, subagents, and skills must be reusable
 - No hardcoded, one-off logic allowed
-- Reusable logic MUST be implemented as skills
+- Reusable logic must be implemented as skills
 
 ---
 
@@ -279,16 +243,15 @@ Subagents MUST NOT own state or make architectural decisions.
 
 ### 11.1 State Persistence
 
-`.ai_state/state.json` MUST store:
+.ai_state/state.json must store:
 - Active phase
 - Current spec
 - Agent execution checkpoints
 - Validation results
 
 ### 11.2 Resume Rule
-
 If execution stops:
-- User types: `continue`
+- User types: continue
 - Orchestrator Agent resumes from last checkpoint
 - No duplication
 - No resets
@@ -299,14 +262,12 @@ If execution stops:
 ## 12. Environment Rules
 
 ### .env Policy
-
-- `.env` required
-- `.env.example` required
+- .env required
+- .env.example required
 - No secrets committed
 
 ### Local-First Rule
-
-- MUST run locally
+- Must run locally
 - Docker forbidden until Phase IV
 - Cloud forbidden until Phase V
 
@@ -314,7 +275,6 @@ If execution stops:
 
 ## 13. Repository Structure
 
-```
 /
 ├── README.md
 ├── docs/
@@ -328,71 +288,79 @@ If execution stops:
 ├── backend/
 ├── frontend/
 └── .ai_state/
-```
 
 ---
 
 ## 14. Git Workflow
 
-- Single branch: `main`
+- Single branch: main
 - No feature branches
 - Each completed phase is tagged
 
-**Example:** `phase-1-complete`
+Example:
+phase-1-complete
 
 ---
 
 ## 15. Out of Scope
 
-The following MUST NOT be committed to the repository:
-
-- `.env` (secrets/credentials)
-- Code experiments
-- Agent prompts containing sensitive data
+- Code
+- Agent prompts
 - API keys
 - Secrets
-- Phase specs (before approval)
-- Experimental implementations
+- Phase specs
+- Experiments
 
 ---
 
 ## 16. Authority
 
-If any tool, framework, tutorial, or AI suggestion conflicts with this constitution, **this constitution overrides everything**.
+If any tool, framework, tutorial, or AI suggestion conflicts with this constitution, this constitution overrides everything.
 
 ---
 
 ## 17. Status
 
-- **Phase I:** Active
-- **Phase II–V:** Defined and Locked
+Phase I: Active
+Phase II–V: Defined and Locked
 
----
+End of Constitution
+```
 
-## Governance
+## Response snapshot
 
-### Amendment Procedure
+Constitution successfully ratified and written to `.specify/memory/constitution.md`.
 
-1. Constitution amendments MUST be proposed via spec
-2. Amendments require human approval
-3. Version MUST be incremented according to semantic versioning:
-   - **MAJOR**: Backward incompatible governance/principle removals or redefinitions
-   - **MINOR**: New principle/section added or materially expanded guidance
-   - **PATCH**: Clarifications, wording, typo fixes, non-semantic refinements
-4. Amendment history MUST be documented in Sync Impact Report
+**Version**: 2.1.0 (initial ratification)
+**Date**: 2025-12-31
 
-### Compliance Review
+The constitution defines:
+- 5 Core Principles (Spec First, Agent-Only Execution, Phase Locking, AI Discipline, Human Role)
+- Phase I governance (In-Memory Python Console App)
+- Agent architecture (Orchestrator, Spec, Implementation, Validation)
+- Subagent and Skill rules for reusability
+- Repository structure and git workflow
+- Environment rules and state persistence
 
-- All specs MUST verify compliance with active phase constitution
-- All implementations MUST be validated against constitution by Validation Agent
-- Constitution violations MUST halt execution immediately
+All placeholders in the template have been replaced with concrete values. A Sync Impact Report has been prepended to the constitution file documenting the initial ratification.
 
-### Versioning Policy
+Templates flagged for review:
+- plan-template.md
+- spec-template.md
+- tasks-template.md
+- command files in .specify/templates/commands/
 
-This constitution follows semantic versioning (MAJOR.MINOR.PATCH).
+## Outcome
 
-**Version**: 2.1.0 | **Ratified**: 2025-12-31 | **Last Amended**: 2025-12-31
+- ✅ Impact: Initial constitution ratified, establishing governance for AI-Native Todo Evolution Project
+- 🧪 Tests: N/A (documentation change)
+- 📁 Files: 1 file created (.specify/memory/constitution.md)
+- 🔁 Next prompts: Review and update dependent templates (plan, spec, tasks) to align with constitution principles; Begin Phase I feature specification using /sp.specify
+- 🧠 Reflection: Constitution successfully transformed from template to concrete governance document. All principles are declarative and testable. Version 2.1.0 reflects initial ratification. Templates need review to ensure alignment with agent-only execution and phase locking principles.
 
----
+## Evaluation notes (flywheel)
 
-**End of Constitution**
+- Failure modes observed: None
+- Graders run and results (PASS/FAIL): Manual validation PASS - no unresolved placeholders, semantic versioning followed, dates in ISO format, principles are declarative
+- Prompt variant (if applicable): N/A (initial constitution)
+- Next experiment (smallest change to try): Monitor template consistency during first spec/plan/tasks generation to identify any constitution misalignments

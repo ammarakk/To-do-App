@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch:*)",
+      "Bash(ls:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".specify/scripts/powershell/create-new-feature.ps1\" -Number 1 -ShortName \"console-todo-app\" -Json \"Phase I In-Memory Python Console Todo Application\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".specify/scripts/powershell/create-new-feature.ps1\" -Number 1 -ShortName \"console-todo-app\" -Json \"Phase I In-Memory Python Console Todo Application with basic CRUD operations\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".specify/scripts/powershell/setup-plan.ps1\" -Json)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)",
+      "Bash(if [ -d \"specs/001-console-todo-app/checklists\" ])",
+      "Bash(then ls specs/001-console-todo-app/checklists/*.md)",
+      "Bash(else echo \"No checklists directory\")",
+      "Bash(fi)",
+      "Bash(git rev-parse:*)",
+      "Bash(if [ -f \".gitignore\" ])",
+      "Bash(then echo \"exists\")",
+      "Bash(else echo \"missing\")",
+      "Bash(python -c:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
