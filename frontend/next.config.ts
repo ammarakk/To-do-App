@@ -7,8 +7,6 @@ const nextConfig: NextConfig = {
   experimental: {
     // Optimize package imports
     optimizePackageImports: ['@supabase/supabase-js'],
-    // Disable Turbopack for better CSS compatibility
-    turbo: undefined,
   },
 };
 
