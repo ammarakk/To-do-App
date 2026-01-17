@@ -45,7 +45,7 @@ export default function TodoList({ filters, pagination, onPageChange, onEdit, on
 
       try {
         // Build query parameters from filters
-        const params: Record<string, any> = {
+        const params: Record<string, string | number | undefined> = {
           page: pagination.page,
           page_size: pagination.limit,
         }
