@@ -118,10 +118,10 @@ export default function TodoForm({ todo, onClose, onSuccess }: TodoFormProps) {
         // Update existing todo
         const updateData: TodoUpdate = {
           title: formData.title.trim(),
-          description: formData.description.trim() || null,
+          description: formData.description.trim() || undefined,
           priority: formData.priority,
-          category: formData.category || null,
-          due_date: formData.due_date || null,
+          category: formData.category || undefined,
+          due_date: formData.due_date || undefined,
         }
 
         await apiClient.updateTodo(todo.id, updateData)
