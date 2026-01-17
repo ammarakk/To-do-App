@@ -34,6 +34,7 @@ export default function TodoList({ filters, pagination, onPageChange, onEdit, on
   const [todos, setTodos] = useState<Todo[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [conflictWarning, setConflictWarning] = useState<string | null>(null)
 
   /**
    * Fetch todos based on filters and pagination from API
@@ -97,12 +98,22 @@ export default function TodoList({ filters, pagination, onPageChange, onEdit, on
       console.error('Error deleting todo:', err)
 
       if (err instanceof ApiRequestError) {
+        // Check for conflict error (409)
+        if (err.statusCode === 409) {
+          setConflictWarning('This todo was modified elsewhere. Please refresh and try again.')
+          setTimeout(() => setConflictWarning(null), 5000)
+          // Refresh list to get latest data
+          setTimeout(() => {
+            window.location.reload()
+          }, 2000)
+          return
+        }
         setError(getErrorMessage(err))
       } else {
         setError('Failed to delete todo. Please try again.')
       }
 
-      // Refresh list to restore state
+      // Clear error after 3 seconds
       setTimeout(() => {
         setError(null)
       }, 3000)
@@ -145,6 +156,12 @@ export default function TodoList({ filters, pagination, onPageChange, onEdit, on
       )
 
       if (err instanceof ApiRequestError) {
+        // Check for conflict error (409)
+        if (err.statusCode === 409) {
+          setConflictWarning('This todo was modified elsewhere. Your changes were reverted.')
+          setTimeout(() => setConflictWarning(null), 5000)
+          return
+        }
         setError(getErrorMessage(err))
       } else {
         setError('Failed to update todo status. Please try again.')
@@ -284,6 +301,29 @@ export default function TodoList({ filters, pagination, onPageChange, onEdit, on
   // Todo list with pagination
   return (
     <div className="space-y-6">
+      {/* Conflict warning banner */}
+      {conflictWarning && (
+        <div className="rounded-md bg-amber-950/30 border border-amber-500/50 p-4 shadow-[0_0_10px_rgba(245,158,11,0.2)]">
+          <div className="flex">
+            <svg
+              className="h-5 w-5 text-amber-400 flex-shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <div className="ml-3">
+              <p className="text-sm text-amber-200">{conflictWarning}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Todo grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {todos.map((todo) => (

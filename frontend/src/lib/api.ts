@@ -348,24 +348,66 @@ export const apiClient = {
 /**
  * Helper function to convert API error to user-friendly message
  *
+ * Provides specific, actionable error messages based on status code and error type.
+ * Messages use simple language and guide users toward resolution.
+ *
  * @param error - ApiRequestError object
  * @returns User-friendly error message
  */
 export function getErrorMessage(error: ApiRequestError): string {
-  // Validation errors - show field-specific messages
-  if (error.code === 'VALIDATION_ERROR' && error.details.length > 0) {
-    const fieldErrors = error.details
-      .map(detail => {
-        if (detail.field) {
-          return `${detail.field}: ${detail.message}`
-        }
-        return detail.message
-      })
-      .join(', ')
-    return fieldErrors || error.message
+  // Handle by status code for more specific messages
+  if (error.statusCode === 0) {
+    // Network error - no connection or timeout
+    return 'Unable to connect to the server. Please check your internet connection and try again.'
   }
 
-  // Specific error codes
+  if (error.statusCode === 400) {
+    // Validation error
+    if (error.code === 'VALIDATION_ERROR' && error.details.length > 0) {
+      const fieldErrors = error.details
+        .map(detail => {
+          if (detail.field) {
+            return `${detail.field}: ${detail.message}`
+          }
+          return detail.message
+        })
+        .join(', ')
+      return fieldErrors || error.message
+    }
+    return 'Invalid request. Please check your input and try again.'
+  }
+
+  if (error.statusCode === 401) {
+    // Authentication error
+    return 'Your session has expired. Please sign in again.'
+  }
+
+  if (error.statusCode === 403) {
+    // Authorization error
+    return 'You don\'t have permission to perform this action.'
+  }
+
+  if (error.statusCode === 404) {
+    // Not found error
+    return 'The requested resource was not found. It may have been deleted.'
+  }
+
+  if (error.statusCode === 409) {
+    // Conflict error - optimistic update conflict
+    return 'This item was modified by another session. Please refresh and try again.'
+  }
+
+  if (error.statusCode === 429) {
+    // Rate limiting error
+    return 'You\'re making too many requests. Please wait a moment and try again.'
+  }
+
+  if (error.statusCode >= 500) {
+    // Server error
+    return 'Server error. Please try again later. If the problem persists, contact support.'
+  }
+
+  // Fallback to error code or message
   switch (error.code) {
     case 'UNAUTHORIZED':
       return 'Please log in to continue.'
@@ -378,6 +420,6 @@ export function getErrorMessage(error: ApiRequestError): string {
     case 'INTERNAL_SERVER_ERROR':
       return 'Server error. Please try again later.'
     default:
-      return error.message || 'An unexpected error occurred.'
+      return error.message || 'An unexpected error occurred. Please try again.'
   }
 }

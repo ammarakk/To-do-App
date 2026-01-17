@@ -1,25 +1,29 @@
 'use client'
 
 /**
- * Todos Page Component
+ * Todos Page Component - Neon Dark Theme
+ * Phase 4: Professional Audit Hardening
  *
  * Main todos management page with:
  * - Todo list display with pagination
- * - Filter bar for search and filtering
+ * - Filter bar for search and filtering with neon styling
  * - Todo form for creating new todos
+ * - Modal with neon Card component
  * - Loading and empty states
  *
  * Features:
  * - Client-side state management
  * - Real API integration with JWT authentication
  * - Responsive layout with mobile-first design
- * - Professional, polished interface
+ * - Professional, polished interface with neon dark theme
  */
 
 import { useState, useEffect } from 'react'
 import TodoList from '@/components/todos/TodoList'
 import TodoForm from '@/components/todos/TodoForm'
 import FilterBar from '@/components/todos/FilterBar'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 
 /**
  * Todo data structure matching API schema
@@ -126,16 +130,16 @@ export default function TodosPage() {
       {/* Page header */}
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Todos</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-primary font-[var(--font-orbitron)]">Todos</h1>
+          <p className="mt-1 text-sm text-secondary">
             Manage your tasks and stay organized
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="md"
             onClick={handleCreateNew}
-            className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 min-h-[44px] transition-colors"
           >
             <svg
               className="mr-2 h-5 w-5"
@@ -148,7 +152,7 @@ export default function TodosPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
             Add Todo
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -175,29 +179,31 @@ export default function TodosPage() {
           <div className="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
               onClick={handleCloseForm}
               aria-hidden="true"
             ></div>
 
-            {/* Form panel */}
-            <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
-                    <h3 className="text-lg font-semibold leading-6 text-gray-900" id="modal-title">
-                      {editingTodo ? 'Edit Todo' : 'Create New Todo'}
-                    </h3>
-                    <div className="mt-4">
-                      <TodoForm
-                        todo={editingTodo}
-                        onClose={handleCloseForm}
-                        onSuccess={handleUpdate}
-                      />
-                    </div>
+            {/* Form panel with neon Card */}
+            <div className="relative transform overflow-hidden rounded-lg shadow-[0_0_30px_rgba(0,255,255,0.2)] transition-all sm:my-8 sm:w-full sm:max-w-lg">
+              <Card
+                variant="neon-border"
+                padding="lg"
+                className="bg-dark-card"
+              >
+                <div className="w-full">
+                  <h3 className="text-lg font-semibold leading-6 text-primary font-[var(--font-orbitron)]" id="modal-title">
+                    {editingTodo ? 'Edit Todo' : 'Create New Todo'}
+                  </h3>
+                  <div className="mt-4">
+                    <TodoForm
+                      todo={editingTodo}
+                      onClose={handleCloseForm}
+                      onSuccess={handleUpdate}
+                    />
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         </div>

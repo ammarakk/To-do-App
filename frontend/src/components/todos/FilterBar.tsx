@@ -1,23 +1,28 @@
 'use client'
 
 /**
- * FilterBar Component
+ * FilterBar Component - Neon Dark Theme
+ * Phase 4: Professional Audit Hardening
  *
  * Provides filtering and search functionality for todos:
- * - Search input for title/description
+ * - Search input using neon Input component
  * - Filter by priority (low, medium, high)
  * - Filter by status (pending, in_progress, completed)
  * - Filter by category
- * - Clear all filters button
+ * - Clear all filters button using neon Button
  *
  * Features:
  * - Responsive layout (stacked on mobile, inline on desktop)
  * - Real-time filter updates
- * - Visual indication of active filters
+ * - Visual indication of active filters with neon glow
  * - Accessible form controls
+ * - Dark theme with neon accents
  */
 
 import { TodoFilters } from '@/app/(dashboard)/todos/page'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 
 interface FilterBarProps {
   filters: TodoFilters
@@ -60,17 +65,22 @@ export default function FilterBar({ filters, onFilterChange, onClearFilters }: F
   ]
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
+    <Card variant="default" padding="md" className="space-y-4">
+      <form className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:gap-4" onSubmit={(e) => e.preventDefault()}>
         {/* Search input */}
         <div className="flex-1">
-          <label htmlFor="search" className="sr-only">
-            Search todos
-          </label>
           <div className="relative">
+            <Input
+              id="search"
+              type="text"
+              value={filters.search}
+              onChange={(e) => onFilterChange({ search: e.target.value })}
+              placeholder="Search todos..."
+              className="pl-10"
+            />
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
-                className="h-5 w-5 text-gray-400"
+                className="h-5 w-5 text-secondary"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth="2"
@@ -84,14 +94,6 @@ export default function FilterBar({ filters, onFilterChange, onClearFilters }: F
                 />
               </svg>
             </div>
-            <input
-              id="search"
-              type="text"
-              value={filters.search}
-              onChange={(e) => onFilterChange({ search: e.target.value })}
-              placeholder="Search todos..."
-              className="block w-full rounded-md border-0 py-2 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 min-h-[44px]"
-            />
           </div>
         </div>
 
@@ -104,7 +106,8 @@ export default function FilterBar({ filters, onFilterChange, onClearFilters }: F
             id="priority-filter"
             value={filters.priority}
             onChange={(e) => onFilterChange({ priority: e.target.value })}
-            className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 min-h-[44px]"
+            aria-label="Filter todos by priority"
+            className="block w-full rounded-md border border-gray-700 bg-dark-input px-3 py-2 text-sm text-primary focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-950 shadow-[0_0_5px_rgba(0,255,255,0.1)] focus:shadow-[0_0_10px_rgba(0,255,255,0.3)] transition-all duration-200 min-h-[44px]"
           >
             {priorityOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -123,7 +126,8 @@ export default function FilterBar({ filters, onFilterChange, onClearFilters }: F
             id="status-filter"
             value={filters.status}
             onChange={(e) => onFilterChange({ status: e.target.value })}
-            className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 min-h-[44px]"
+            aria-label="Filter todos by status"
+            className="block w-full rounded-md border border-gray-700 bg-dark-input px-3 py-2 text-sm text-primary focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-950 shadow-[0_0_5px_rgba(0,255,255,0.1)] focus:shadow-[0_0_10px_rgba(0,255,255,0.3)] transition-all duration-200 min-h-[44px]"
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -142,7 +146,8 @@ export default function FilterBar({ filters, onFilterChange, onClearFilters }: F
             id="category-filter"
             value={filters.category}
             onChange={(e) => onFilterChange({ category: e.target.value })}
-            className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 min-h-[44px]"
+            aria-label="Filter todos by category"
+            className="block w-full rounded-md border border-gray-700 bg-dark-input px-3 py-2 text-sm text-primary focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-950 shadow-[0_0_5px_rgba(0,255,255,0.1)] focus:shadow-[0_0_10px_rgba(0,255,255,0.3)] transition-all duration-200 min-h-[44px]"
           >
             {categoryOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -155,13 +160,15 @@ export default function FilterBar({ filters, onFilterChange, onClearFilters }: F
         {/* Clear filters button */}
         {hasActiveFilters() && (
           <div>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="md"
               onClick={onClearFilters}
-              className="inline-flex items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 min-h-[44px] transition-colors"
+              aria-label="Clear all filters"
+              type="button"
             >
               <svg
-                className="mr-2 h-4 w-4 text-gray-400"
+                className="mr-2 h-4 w-4"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth="2"
@@ -175,36 +182,36 @@ export default function FilterBar({ filters, onFilterChange, onClearFilters }: F
                 />
               </svg>
               Clear Filters
-            </button>
+            </Button>
           </div>
         )}
-      </div>
+      </form>
 
       {/* Active filters display (mobile friendly) */}
       {hasActiveFilters() && (
         <div className="mt-4 flex flex-wrap gap-2 sm:hidden">
           {filters.search && (
-            <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+            <span className="inline-flex items-center rounded-md bg-cyan-950/30 px-2 py-1 text-xs font-medium text-cyan-300 border border-cyan-600/50 shadow-[0_0_5px_rgba(0,255,255,0.2)]">
               Search: {filters.search}
             </span>
           )}
           {filters.priority && (
-            <span className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
+            <span className="inline-flex items-center rounded-md bg-amber-950/40 px-2 py-1 text-xs font-medium text-amber-300 border border-amber-600/50 shadow-[0_0_5px_rgba(251,191,36,0.2)]">
               Priority: {filters.priority}
             </span>
           )}
           {filters.status && (
-            <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+            <span className="inline-flex items-center rounded-md bg-fuchsia-950/30 px-2 py-1 text-xs font-medium text-fuchsia-400 border border-fuchsia-700/50 shadow-[0_0_5px_rgba(255,0,255,0.2)]">
               Status: {filters.status}
             </span>
           )}
           {filters.category && (
-            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+            <span className="inline-flex items-center rounded-md bg-fuchsia-950/30 px-2 py-1 text-xs font-medium text-fuchsia-400 border border-fuchsia-700/50 shadow-[0_0_5px_rgba(255,0,255,0.2)]">
               Category: {filters.category}
             </span>
           )}
         </div>
       )}
-    </div>
+    </Card>
   )
 }

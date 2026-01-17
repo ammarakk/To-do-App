@@ -99,9 +99,19 @@ export default function TodoForm({ todo, onClose, onSuccess }: TodoFormProps) {
 
   /**
    * Handle form submission
+   *
+   * Includes rapid-click protection via isLoading state:
+   * - Form submission disabled while isLoading is true
+   * - Early return prevents double-submission
+   * - All buttons disabled during async operations
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Prevent double-submission
+    if (isLoading) {
+      return
+    }
 
     // Clear previous errors
     setErrors({})

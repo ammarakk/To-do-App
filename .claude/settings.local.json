@@ -13,7 +13,14 @@
       "Bash(npx create-next-app:*)",
       "Bash(npm install:*)",
       "Bash(timeout:*)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(npx -y vercel env add:*)",
+      "Bash(Get-ChildItem -Directory -Path \"specs\")",
+      "Bash(Where-Object { $_Name -match '^\\\\d+-professional-audit$' })",
+      "Bash(Select-Object:*)",
+      "Bash(ls:*)",
+      "Bash(pwsh:*)",
+      "Bash(powershell.exe:*)"
     ]
   }
 }

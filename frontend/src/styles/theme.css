@@ -1,0 +1,165 @@
+/**
+ * Dark Neon Robotic Theme
+ * Phase 1: Professional Audit Hardening
+ * Color palette with cyan, magenta, and electric blue accents
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (VARIABLES)
+   ============================================ */
+
+:root {
+  /* Neon Colors */
+  --neon-primary: #00FFFF;     /* Cyan */
+  --neon-secondary: #FF00FF;   /* Magenta */
+  --neon-accent: #007FFF;      /* Electric Blue */
+
+  /* Dark Backgrounds */
+  --bg-dark: #0A0A0A;          /* Main background */
+  --bg-card: #111111;          /* Card background */
+  --bg-input: #1A1A1A;         /* Input background */
+
+  /* Text Colors */
+  --text-primary: #EDEDED;     /* Primary text */
+  --text-secondary: #A0A0A0;   /* Secondary text */
+
+  /* Glow Effects (box-shadow values) */
+  --glow-sm: 0 0 5px rgba(0, 255, 255, 0.3);
+  --glow-md: 0 0 10px rgba(0, 255, 255, 0.5);
+  --glow-lg: 0 0 20px rgba(0, 255, 255, 0.7);
+
+  /* Spacing Scale */
+  --spacing-xs: 0.25rem;    /* 4px */
+  --spacing-sm: 0.5rem;     /* 8px */
+  --spacing-md: 1rem;       /* 16px */
+  --spacing-lg: 1.5rem;     /* 24px */
+  --spacing-xl: 2rem;       /* 32px */
+
+  /* Border Radius */
+  --border-radius-sm: 0.25rem;   /* 4px */
+  --border-radius-md: 0.5rem;    /* 8px */
+  --border-radius-lg: 0.75rem;   /* 12px */
+}
+
+/* ============================================
+   UTILITY CLASSES - BACKGROUNDS
+   ============================================ */
+
+.bg-dark-main {
+  background-color: var(--bg-dark);
+}
+
+.bg-dark-card {
+  background-color: var(--bg-card);
+}
+
+.bg-dark-input {
+  background-color: var(--bg-input);
+}
+
+/* ============================================
+   UTILITY CLASSES - TEXT COLORS
+   ============================================ */
+
+.text-neon-primary {
+  color: var(--neon-primary);
+}
+
+.text-neon-secondary {
+  color: var(--neon-secondary);
+}
+
+.text-neon-accent {
+  color: var(--neon-accent);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   UTILITY CLASSES - GLOW TEXT
+   ============================================ */
+
+.glow-text-primary {
+  color: var(--neon-primary);
+  text-shadow:
+    0 0 5px rgba(0, 255, 255, 0.5),
+    0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.glow-text-secondary {
+  color: var(--neon-secondary);
+  text-shadow:
+    0 0 5px rgba(255, 0, 255, 0.5),
+    0 0 10px rgba(255, 0, 255, 0.3);
+}
+
+/* ============================================
+   UTILITY CLASSES - BORDERS & GLOWS
+   ============================================ */
+
+.border-neon {
+  border-color: var(--neon-primary);
+}
+
+.border-glow-sm {
+  border: 1px solid var(--neon-primary);
+  box-shadow: var(--glow-sm);
+}
+
+.border-glow-md {
+  border: 1px solid var(--neon-primary);
+  box-shadow: var(--glow-md);
+}
+
+/* ============================================
+   THEME APPLICATION
+   ============================================ */
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+/* Enforce dark mode by default */
+* {
+  border-color: var(--bg-card);
+}
+
+/* Focus states with neon glow */
+*:focus-visible {
+  outline: 2px solid var(--neon-primary);
+  outline-offset: 2px;
+  box-shadow: var(--glow-sm);
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--neon-primary);
+  color: var(--bg-dark);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-md);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-primary);
+  box-shadow: var(--glow-sm);
+}

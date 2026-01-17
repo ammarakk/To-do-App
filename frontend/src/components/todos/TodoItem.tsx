@@ -1,24 +1,31 @@
 'use client'
 
 /**
- * TodoItem Component
+ * TodoItem Component - Neon Dark Theme
+ * Phase 6: Professional Audit Hardening - Final Polish
  *
  * Displays individual todo with:
  * - Title, description, and metadata
- * - Priority and status badges
+ * - Priority and status badges with neon colors
  * - Due date display
- * - Edit and delete actions
+ * - Edit and delete actions using neon Button components
  * - Status toggle checkbox
+ * - Neon Card component for container
+ * - Rapid-click protection on all interactive elements
  *
  * Features:
- * - Responsive card layout
- * - Color-coded priority indicators
- * - Hover effects and transitions
+ * - Responsive card layout with dark theme
+ * - Neon color-coded priority and status indicators
+ * - Hover effects with glow
  * - Touch-friendly action buttons
  * - Accessible keyboard navigation
+ * - Processing state to prevent double-clicks
  */
 
+import { useState } from 'react'
 import { Todo } from '@/app/(dashboard)/todos/page'
+import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 
 interface TodoItemProps {
   todo: Todo
@@ -28,26 +35,28 @@ interface TodoItemProps {
 }
 
 export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: TodoItemProps) {
+  const [isProcessing, setIsProcessing] = useState(false)
   /**
-   * Get priority badge styles
+   * Get priority badge styles with neon colors
+   * Colors adjusted to meet WCAG AA contrast requirements (4.5:1 for normal text)
    */
   const getPriorityBadge = () => {
     const styles = {
-      low: 'bg-blue-50 text-blue-700 border-blue-200',
-      medium: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-      high: 'bg-red-50 text-red-700 border-red-200',
+      low: 'bg-cyan-950/30 text-cyan-300 border-cyan-600/50 shadow-[0_0_5px_rgba(0,255,255,0.2)]', // Lighter cyan for better contrast
+      medium: 'bg-amber-950/40 text-amber-300 border-amber-600/50 shadow-[0_0_5px_rgba(251,191,36,0.2)]', // Amber instead of yellow for better contrast
+      high: 'bg-red-950/30 text-red-400 border-red-700/50 shadow-[0_0_5px_rgba(255,0,0,0.2)]', // Red already meets requirements
     }
     return styles[todo.priority]
   }
 
   /**
-   * Get status badge styles
+   * Get status badge styles with neon colors
    */
   const getStatusBadge = () => {
     const styles = {
-      pending: 'bg-gray-50 text-gray-700 border-gray-200',
-      in_progress: 'bg-blue-50 text-blue-700 border-blue-200',
-      completed: 'bg-green-50 text-green-700 border-green-200',
+      pending: 'bg-gray-800/50 text-gray-400 border-gray-700',
+      in_progress: 'bg-fuchsia-950/30 text-fuchsia-400 border-fuchsia-700/50 shadow-[0_0_5px_rgba(255,0,255,0.2)]',
+      completed: 'bg-green-950/30 text-green-400 border-green-700/50 shadow-[0_0_5px_rgba(0,255,0,0.2)]',
     }
     return styles[todo.status]
   }
@@ -95,23 +104,62 @@ export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: Tod
 
   const isCompleted = todo.status === 'completed'
 
+  /**
+   * Handle status toggle with rapid-click protection
+   */
+  const handleToggleClick = () => {
+    if (isProcessing) return
+    setIsProcessing(true)
+    onToggleStatus(todo.id, todo.status)
+    // Reset processing state after a short delay
+    setTimeout(() => setIsProcessing(false), 500)
+  }
+
+  /**
+   * Handle edit with rapid-click protection
+   */
+  const handleEditClick = () => {
+    if (isProcessing) return
+    setIsProcessing(true)
+    onEdit(todo)
+    // Reset processing state after modal open
+    setTimeout(() => setIsProcessing(false), 200)
+  }
+
+  /**
+   * Handle delete with rapid-click protection
+   */
+  const handleDeleteClick = () => {
+    if (isProcessing) return
+    if (confirm(`Are you sure you want to delete "${todo.title}"?`)) {
+      setIsProcessing(true)
+      onDelete(todo.id)
+      // Keep processing state true during deletion
+    }
+  }
+
   return (
-    <div className={`bg-white rounded-lg shadow-sm border transition-all duration-200 hover:shadow-md ${
-      isCompleted ? 'border-gray-200 opacity-75' : 'border-gray-200'
-    }`}>
-      <div className="p-4 sm:p-5">
+    <Card
+      variant="neon-border"
+      padding="md"
+      hover
+      className={`transition-all duration-200 ${
+        isCompleted ? 'opacity-60' : ''
+      }`}
+    >
         {/* Header: checkbox and title */}
         <div className="flex items-start gap-3 mb-3">
           {/* Status checkbox */}
           <button
             type="button"
-            onClick={() => onToggleStatus(todo.id, todo.status)}
-            className={`mt-1 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors min-h-[20px] min-w-[20px] ${
+            onClick={handleToggleClick}
+            disabled={isProcessing}
+            className={`mt-1 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 min-h-[20px] min-w-[20px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed ${
               isCompleted
                 ? 'bg-green-600 border-green-600'
                 : 'border-gray-300 hover:border-green-500'
             }`}
-            aria-label={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+            aria-label={`Mark "${todo.title}" as ${isCompleted ? 'incomplete' : 'complete'}`}
           >
             {isCompleted && (
               <svg
@@ -129,8 +177,8 @@ export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: Tod
 
           {/* Title */}
           <div className="flex-1 min-w-0">
-            <h3 className={`text-base font-semibold text-gray-900 break-words ${
-              isCompleted ? 'line-through text-gray-500' : ''
+            <h3 className={`text-base font-semibold text-primary break-words ${
+              isCompleted ? 'line-through text-secondary' : ''
             }`}>
               {todo.title}
             </h3>
@@ -139,8 +187,8 @@ export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: Tod
 
         {/* Description */}
         {todo.description && (
-          <p className={`text-sm text-gray-600 mb-4 line-clamp-2 ${
-            isCompleted ? 'line-through text-gray-400' : ''
+          <p className={`text-sm text-secondary mb-4 line-clamp-2 ${
+            isCompleted ? 'line-through text-gray-500' : ''
           }`}>
             {todo.description}
           </p>
@@ -160,7 +208,7 @@ export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: Tod
 
           {/* Category badge */}
           {todo.category && (
-            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 border border-purple-200">
+            <span className="inline-flex items-center rounded-md bg-fuchsia-950/30 px-2 py-1 text-xs font-medium text-fuchsia-400 border border-fuchsia-700/50 shadow-[0_0_5px_rgba(255,0,255,0.2)]">
               {todo.category.charAt(0).toUpperCase() + todo.category.slice(1)}
             </span>
           )}
@@ -169,8 +217,8 @@ export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: Tod
           {todo.due_date && (
             <span className={`inline-flex items-center text-xs ${
               new Date(todo.due_date) < new Date() && !isCompleted
-                ? 'text-red-600 font-medium'
-                : 'text-gray-500'
+                ? 'text-red-400 font-medium shadow-[0_0_5px_rgba(255,0,0,0.3)]'
+                : 'text-secondary'
             }`}>
               <svg
                 className="mr-1 h-3.5 w-3.5"
@@ -192,13 +240,14 @@ export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: Tod
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-cyan-900/30">
           {/* Edit button */}
-          <button
-            type="button"
-            onClick={() => onEdit(todo)}
-            className="inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 min-h-[44px] min-w-[44px] transition-colors"
-            aria-label={`Edit ${todo.title}`}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleEditClick}
+            disabled={isProcessing}
+            aria-label={`Edit todo: ${todo.title}`}
           >
             <svg
               className="h-4 w-4 sm:mr-1.5"
@@ -215,18 +264,16 @@ export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: Tod
               />
             </svg>
             <span className="hidden sm:inline">Edit</span>
-          </button>
+          </Button>
 
           {/* Delete button */}
-          <button
-            type="button"
-            onClick={() => {
-              if (confirm(`Are you sure you want to delete "${todo.title}"?`)) {
-                onDelete(todo.id)
-              }
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-inset ring-red-300 hover:bg-red-50 min-h-[44px] min-w-[44px] transition-colors"
-            aria-label={`Delete ${todo.title}`}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDeleteClick}
+            disabled={isProcessing}
+            aria-label={`Delete todo: ${todo.title}`}
+            className="text-red-400 hover:bg-red-950/30 border-red-700/50 hover:border-red-400 hover:shadow-[0_0_10px_rgba(255,0,0,0.3)] focus-visible:ring-red-400 disabled:opacity-50"
           >
             <svg
               className="h-4 w-4 sm:mr-1.5"
@@ -243,9 +290,8 @@ export default function TodoItem({ todo, onEdit, onDelete, onToggleStatus }: Tod
               />
             </svg>
             <span className="hidden sm:inline">Delete</span>
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+    </Card>
   )
 }

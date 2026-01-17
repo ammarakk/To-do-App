@@ -22,7 +22,7 @@ interface LogoutButtonProps {
    * Variant styling for the button
    * @default 'primary'
    */
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'neon-ghost'
 
   /**
    * Size of the button
@@ -48,6 +48,7 @@ const variants = {
   primary: 'bg-indigo-600 text-white hover:bg-indigo-500 focus:ring-indigo-600',
   secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-indigo-600',
   ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+  'neon-ghost': 'bg-transparent text-neon-primary hover:bg-cyan-950/30 border border-cyan-700/50 hover:border-cyan-400 shadow-[0_0_5px_rgba(0,255,255,0.1)] hover:shadow-[0_0_10px_rgba(0,255,255,0.3)]',
 }
 
 /**

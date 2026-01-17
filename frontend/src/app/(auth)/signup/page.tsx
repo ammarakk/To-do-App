@@ -3,6 +3,7 @@
  *
  * Provides user registration interface with email and password.
  * Part of the (auth) route group for authentication flows.
+ * Features neon dark theme styling.
  */
 
 import Link from 'next/link'
@@ -15,16 +16,16 @@ export const metadata = {
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen flex-col justify-center bg-gray-50 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col justify-center bg-gray-950 py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Logo or brand */}
+        {/* Logo or brand with neon glow */}
         <div className="flex justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-fuchsia-500 shadow-[0_0_20px_rgba(255,0,255,0.5)]">
             <svg
-              className="h-8 w-8 text-white"
+              className="h-8 w-8 text-gray-950"
               fill="none"
               viewBox="0 0 24 24"
-              strokeWidth={1.5}
+              strokeWidth={2.5}
               stroke="currentColor"
             >
               <path
@@ -35,14 +36,14 @@ export default function SignupPage() {
             </svg>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-primary font-[var(--font-orbitron)] shadow-[0_0_10px_rgba(255,0,255,0.3)]">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-secondary">
           Already have an account?{' '}
           <Link
             href="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+            className="font-medium text-neon-secondary hover:text-fuchsia-400 transition-colors shadow-[0_0_5px_rgba(255,0,255,0.2)]"
           >
             Sign in
           </Link>
@@ -50,22 +51,8 @@ export default function SignupPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white px-4 py-8 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 px-4 py-8 shadow-[0_0_20px_rgba(255,0,255,0.1)] sm:rounded-lg sm:px-10">
           <SignupForm />
-        </div>
-
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              By signing up, you agree to our Terms of Service and Privacy Policy
-            </p>
-          </div>
         </div>
       </div>
     </div>
