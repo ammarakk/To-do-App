@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(python:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv run python:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(uv run uvicorn:*)",
+      "Bash(tree:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npm install:*)",
+      "Bash(timeout:*)",
+      "Bash(npm run build)"
+    ]
+  }
+}
