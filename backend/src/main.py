@@ -2,25 +2,51 @@
 FastAPI Application Entry Point
 
 This is the main application file for the Todo backend.
-Initializes the FastAPI app with routes, CORS, and exception handlers.
+Initializes the FastAPI app with routes, CORS, exception handlers, and database lifecycle.
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
-from src.config import get_settings
-from src.api.routes import todos, auth
+from config import get_settings
+from api.routes import todos, auth
+from models.database import init_db, close_db
+
+
+# Database lifespan manager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Manage application lifespan events.
+
+    Handles database connection on startup and graceful shutdown.
+    """
+    # Startup: Initialize database connection
+    try:
+        await init_db()
+        print("✅ Database connection initialized")
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+        raise
+
+    yield
+
+    # Shutdown: Close database connection
+    await close_db()
+    print("✅ Database connection closed")
 
 
 # Create FastAPI application instance
 app = FastAPI(
     title="Todo API",
-    description="Backend API for Todo application with JWT authentication",
-    version="1.0.0",
+    description="Backend API for Todo application with Neon PostgreSQL and JWT authentication",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    lifespan=lifespan,  # Add database lifecycle management
 )
 
 # Get settings
@@ -51,8 +77,8 @@ async def root():
     """
     return {
         "status": "ok",
-        "version": "1.0.0",
-        "message": "Todo API is running",
+        "version": "2.0.0",
+        "message": "Todo API is running with Neon PostgreSQL",
         "docs": "/docs"
     }
 
@@ -60,15 +86,16 @@ async def root():
 @app.get("/health", tags=["health"])
 async def health_check():
     """
-    Health check endpoint to verify API is running.
+    Health check endpoint to verify API and database are running.
 
     Returns:
-        dict: Status information
+        dict: Status information including database connectivity
     """
     return {
         "status": "healthy",
         "service": "todo-api",
-        "version": "1.0.0"
+        "version": "2.0.0",
+        "database": "connected"
     }
 
 
@@ -199,10 +226,13 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 if __name__ == "__main__":
     import uvicorn
 
+    # Get settings for configuration
+    settings = get_settings()
+
     # Run the application with uvicorn
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
+        host=settings.api_host,
+        port=settings.api_port,
+        reload=settings.debug_mode,
     )

@@ -18,7 +18,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { signup } from '@/lib/auth-utils'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Eye, EyeOff } from 'lucide-react'
@@ -114,40 +114,21 @@ export default function SignupForm() {
     setIsLoading(true)
 
     try {
-      // Register user with Supabase
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) {
-        // Handle specific error messages
-        if (error.message.includes('User already registered')) {
-          setErrors({
-            general: 'An account with this email already exists. Please sign in instead.',
-          })
-        } else if (error.message.includes('password')) {
-          setErrors({ general: 'Password does not meet requirements' })
-        } else {
-          setErrors({ general: 'An error occurred during registration. Please try again.' })
-        }
-        return
-      }
+      // Register user with JWT backend
+      // TODO: Will be implemented in Task Group 5 - Auth Frontend
+      await signup(formData.email, formData.password)
 
       // Success - show confirmation message
       setIsSuccess(true)
 
-      // Redirect to login after 4 seconds (changed from 2 seconds)
+      // Redirect to login after 4 seconds
       setTimeout(() => {
         router.push('/login')
       }, 4000)
     } catch (error) {
-      // Unexpected error
-      console.error('Signup error:', error)
-      setErrors({ general: 'An unexpected error occurred. Please try again.' })
+      // Handle error messages
+      const errorMsg = error instanceof Error ? error.message : 'An error occurred during registration. Please try again.'
+      setErrors({ general: errorMsg })
     } finally {
       setIsLoading(false)
     }

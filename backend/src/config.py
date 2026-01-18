@@ -2,12 +2,12 @@
 Environment Configuration Module for Todo Backend
 
 This module loads and validates all environment variables required for
-the FastAPI application to connect to Supabase.
+the FastAPI application to connect to Neon PostgreSQL.
 
 Security Rules:
 - NEVER commit .env file to version control
-- SERVICE_ROLE_KEY is for backend use ONLY (bypasses RLS, use with extreme caution)
-- ANON_KEY is for frontend use (RLS enforced)
+- Database URL contains sensitive credentials
+- JWT secret must be cryptographically secure
 - All sensitive values must come from environment variables
 """
 
@@ -38,23 +38,31 @@ class Settings(BaseSettings):
         description="Environment name (development, staging, production)"
     )
 
-    # Supabase Configuration
-    supabase_url: str = Field(
+    # Database Configuration (Neon PostgreSQL)
+    database_url: str = Field(
         ...,
-        description="Supabase project URL (e.g., https://xyzcompany.supabase.co)"
+        description="Neon PostgreSQL connection URL (postgresql://...)"
     )
-    supabase_anon_key: str = Field(
+
+    # JWT Configuration
+    jwt_secret_key: str = Field(
         ...,
-        description="Supabase anonymous/public key (for frontend use)"
+        description="Secret key for JWT token signing (must be cryptographically secure)"
     )
-    supabase_service_role_key: str = Field(
-        ...,
-        description="Supabase service role key (BACKEND ONLY - bypasses RLS)"
+    jwt_algorithm: str = Field(
+        default="HS256",
+        description="Algorithm for JWT token signing"
+    )
+    access_token_expire_minutes: int = Field(
+        default=15,
+        description="Access token expiration time in minutes"
+    )
+    refresh_token_expire_days: int = Field(
+        default=7,
+        description="Refresh token expiration time in days"
     )
 
     # CORS Configuration
-    # This is parsed from CORS_ORIGINS env var (comma-separated string)
-    # Store as string internally to avoid pydantic-settings JSON parsing issues
     cors_origins: str = Field(
         default="http://localhost:3000,http://localhost:5173",
         description="Comma-separated list of allowed CORS origins"
@@ -62,7 +70,7 @@ class Settings(BaseSettings):
 
     # Application Metadata
     app_name: str = "Todo API"
-    app_version: str = "1.0.0"
+    app_version: str = "2.0.0"
     debug_mode: bool = False
 
     @property
@@ -85,16 +93,21 @@ class Settings(BaseSettings):
             raise ValueError(f"environment must be one of {allowed}, got '{v}'")
         return v
 
-    @validator("supabase_url")
-    def validate_supabase_url(cls, v):
-        """Validate Supabase URL format."""
-        if not v.startswith("https://"):
+    @validator("database_url")
+    def validate_database_url(cls, v):
+        """Validate Neon database URL format."""
+        if not v.startswith("postgresql://") and not v.startswith("postgres://"):
             raise ValueError(
-                f"supabase_url must start with 'https://', got: {v}"
+                f"database_url must start with 'postgresql://' or 'postgres://', got: {v[:20]}..."
             )
-        if ".supabase.co" not in v and ".supabase.in" not in v:
+        return v
+
+    @validator("jwt_secret_key")
+    def validate_jwt_secret(cls, v):
+        """Validate JWT secret key is sufficiently long."""
+        if len(v) < 32:
             raise ValueError(
-                f"supabase_url must be a valid Supabase domain (*.supabase.co or *.supabase.in)"
+                f"jwt_secret_key must be at least 32 characters for security, got {len(v)} characters"
             )
         return v
 
@@ -106,10 +119,10 @@ class Settings(BaseSettings):
         return v
 
     model_config = SettingsConfigDict(
-        env_file = ".env",
-        env_file_encoding = "utf-8",
-        case_sensitive = False,  # Allow env vars in any case
-        extra = "ignore"  # Ignore extra env vars
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
     )
 
 
@@ -128,8 +141,8 @@ def get_settings() -> Settings:
 
     Example:
         >>> settings = get_settings()
-        >>> print(settings.supabase_url)
-        'https://xyzcompany.supabase.co'
+        >>> print(settings.database_url)
+        'postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require'
     """
     global _settings
     if _settings is None:
@@ -137,114 +150,162 @@ def get_settings() -> Settings:
     return _settings
 
 
-# Export convenience function for direct imports
-# Usage: from config import get_settings; settings = get_settings()
-# NOTE: Don't auto-instantiate to avoid validation errors during import
-# settings = get_settings()  # Removed: causes import-time validation
-
 # ============================================================================
 # SECURITY DOCUMENTATION
 # ============================================================================
 
 """
-SECURITY RULES FOR SUPABASE KEYS
-=================================
+SECURITY RULES FOR NEON POSTGRESQL & JWT
+=========================================
 
-1. ANON_KEY (Public/Anonymous Key)
-   - Purpose: Used by frontend clients (Next.js app)
-   - Capabilities: Can access data with Row Level Security (RLS) policies enforced
-   - Where to use: Frontend only (browser/client-side code)
-   - Security: Safe to expose in frontend builds
-   - NEVER use in backend for admin operations
+1. DATABASE URL
+   - Purpose: Connection string to Neon PostgreSQL
+   - Contains: Username, password, host, port, database name
+   - Security: MUST NEVER be exposed in frontend or committed to git
+   - Format: postgresql://user:password@host:port/database?sslmode=require
 
-2. SERVICE_ROLE_KEY (Backend-Only Key)
-   - Purpose: Used by backend (FastAPI) for privileged operations
-   - Capabilities: Bypasses RLS policies (full database access)
-   - Where to use: Backend server ONLY (never in frontend)
-   - Security: MUST NEVER be exposed in frontend builds or committed to git
-   - Use ONLY when you need to:
-     * Validate JWT tokens
-     * Perform cross-user operations (admin tasks)
-     * Manage users programmatically
+2. JWT SECRET KEY
+   - Purpose: Cryptographic key for signing JWT tokens
+   - Requirements: At least 32 characters, cryptographically random
+   - Security: MUST NEVER be exposed to frontend or committed to git
+   - Generation: Use `openssl rand -hex 32` or similar
 
-3. JWT SECRET (Supabase JWT Secret)
-   - Purpose: Used to verify JWT signatures issued by Supabase Auth
-   - Capabilities: Cryptographic key for token validation
-   - Where to use: Backend only
-   - Security: MUST NEVER be exposed to frontend
-   - Usage: Verify access tokens from Authorization headers
+3. ACCESS TOKEN (15 minutes)
+   - Purpose: Short-lived token for API authentication
+   - Storage: HTTP-only cookies or secure localStorage
+   - Contains: user_id, email, role, exp
+   - Security: Validated on every protected route
 
-KEY HANDLING RULES
+4. REFRESH TOKEN (7 days)
+   - Purpose: Long-lived token for getting new access tokens
+   - Storage: HTTP-only cookies or secure database
+   - Contains: user_id, token_id, exp
+   - Security: Stored in database, revocable
+
+DATABASE SECURITY
+=================
+
+1. SSL Mode
+   - Always use `?sslmode=require` in database URL
+   - Neon enforces SSL by default
+   - Never disable SSL for production
+
+2. Connection Pooling
+   - SQLAlchemy manages connection pooling
+   - Pool size should match your concurrent load
+   - Use `pool_pre_ping=True` for health checks
+
+3. Row Level Security (Future)
+   - Can be enabled in PostgreSQL for additional security
+   - Use application-level filtering for now
+   - User isolation enforced in service layer
+
+JWT TOKEN VALIDATION FLOW
+===========================
+
+1. Frontend sends request with Authorization header:
+   Authorization: Bearer <access_token>
+
+2. Backend extracts token from header
+
+3. Backend validates token using:
+   - Verify signature using jwt_secret_key
+   - Check expiration time (exp claim)
+   - Verify issuer (iss claim) if set
+
+4. If valid, extract user_id from token
+
+5. Use user_id to:
+   - Filter database queries (enforce user isolation)
+   - Load user-specific data
+   - Enforce authorization rules
+
+TOKEN REFRESH FLOW
 ==================
 
+1. Access token expires (after 15 minutes)
+
+2. Frontend sends refresh request:
+   POST /api/v1/auth/refresh
+   Body: { "refresh_token": "<refresh_token>" }
+
+3. Backend validates refresh token:
+   - Check token exists in database
+   - Verify not revoked
+   - Check not expired
+
+4. If valid, generate new tokens:
+   - New access_token (15 min)
+   - New refresh_token (7 days)
+   - Rotate old refresh token (invalidate old one)
+
+5. Return new tokens to frontend
+
+KEY HANDLING RULES
+===================
+
 1. Environment Variables Only
-   - NEVER hardcode keys in source code
+   - NEVER hardcode secrets in source code
    - ALWAYS load from environment variables or .env file
-   - Use python-dotenv or similar for .env loading
+   - Use python-dotenv for .env loading
 
 2. Git Safety
    - .env file MUST be in .gitignore
    - .env.example file SHOULD be committed (with placeholder values)
    - Verify: `git status` should never show .env file
 
-3. Frontend vs Backend
-   - Frontend uses: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
-   - Backend uses: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-   - NEVER put service_role_key in frontend environment
-
-4. Production Environment
+3. Production Environment
    - Use platform-specific secret management:
      * Vercel: Environment Variables dashboard
      * Railway: Config vars
      * AWS: Secrets Manager
-     * Docker: Docker secrets or env_file
-   - Rotate keys if accidentally exposed
+     * Neon: Supports connection pooling
+   - Rotate secrets if accidentally exposed
 
-5. Local Development
+4. Local Development
    - Create .env file from .env.example
-   - Fill in real values from Supabase dashboard
+   - Generate strong JWT secret with: `openssl rand -hex 32`
+   - Get Neon database URL from Neon console
    - Never share .env file via screenshots or chat
 
-JWT TOKEN VALIDATION FLOW
-==========================
-
-1. Frontend sends request with Authorization header:
-   Authorization: Bearer <jwt_token>
-
-2. Backend extracts token from header
-
-3. Backend validates token using:
-   - Option A: Supabase Python client (recommended)
-     * Uses supabase_service_role_key to verify signature
-     * Returns user metadata if valid
-   - Option B: Manual JWT verification
-     * Uses JWT_SECRET from Supabase dashboard
-     * Verifies signature, expiration, issuer
-
-4. If valid, extract user_id from token
-
-5. Use user_id to:
-   - Filter database queries (defense in depth)
-   - Enforce user isolation in application logic
-   - Pass to RLS policies via auth.uid()
-
 SECURITY CHECKLIST
-==================
+===================
 
 Before deploying:
 - [ ] .env is in .gitignore
-- [ ] No keys in source code (grep for "eyJ", "service_role")
+- [ ] No secrets in source code (grep for passwords, keys)
 - [ ] .env.example has placeholder values only
-- [ ] Service role key used in backend ONLY
-- [ ] Anon key used in frontend ONLY
+- [ ] JWT secret is at least 32 characters
+- [ ] Database URL uses sslmode=require
 - [ ] CORS origins restricted to real domains
 - [ ] Environment variables set in production platform
-- [ ] Keys rotated if accidentally exposed
+- [ ] Secrets rotated if accidentally exposed
+
+NEON POSTGRESQL SETUP
+======================
+
+1. Create Neon Project
+   - Go to https://neon.tech
+   - Create new project
+   - Select region closest to your users
+   - Copy connection string
+
+2. Connection String Format
+   postgresql://username:password@ep-cool-name.aws.neon.tech/neondb?sslmode=require
+
+3. Environment Variable
+   DATABASE_URL=postgresql://username:password@ep-xxx.aws.neon.tech/neondb?sslmode=require
+
+4. Connection Pooling (Optional)
+   - Neon supports PgBouncer for connection pooling
+   - Use for production to reduce connection overhead
+   - Add ?pgbouncer=true to connection string if needed
 
 FOR MORE INFORMATION
 ====================
 
-Supabase Docs: https://supabase.com/docs/guides/api
-RLS Guide: https://supabase.com/docs/guides/auth/row-level-security
-JWT Verification: https://supabase.com/docs/guides/auth/server-side-rendering
+Neon Docs: https://neon.tech/docs
+SQLAlchemy Async: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
+FastAPI Security: https://fastapi.tiangolo.com/tutorial/security/
+JWT Best Practices: https://tools.ietf.org/html/rfc8725
 """

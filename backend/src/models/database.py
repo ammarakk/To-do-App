@@ -1,81 +1,106 @@
 """
-Supabase Database Configuration Module
+Database Connection and Session Management
 
-This module configures and provides access to the Supabase Python client.
-It uses the service role key for backend operations that require elevated privileges.
+This module provides:
+- Async engine for Neon PostgreSQL
+- Session factory for database operations
+- Base class for SQLAlchemy models
+- Dependency injection for FastAPI
 
-Security Rules:
-- SERVICE_ROLE_KEY is for backend use ONLY (bypasses RLS)
-- Never expose this client or its configuration to frontend
-- Use this client for JWT verification and privileged database operations
+Uses async SQLAlchemy with asyncpg driver for optimal performance.
 """
 
-from supabase import create_client, Client
-from typing import Optional
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
+from typing import AsyncGenerator
 
-from src.config import get_settings
-
-
-# Global Supabase client instance (lazy-loaded)
-_supabase_client: Optional[Client] = None
+from config import get_settings
 
 
-def get_supabase_client() -> Client:
+# Get settings
+settings = get_settings()
+
+# Create async engine
+# pool_pre_ping=True: Check connection health before use
+# pool_recycle=3600: Recycle connections after 1 hour (prevent stale connections)
+engine = create_async_engine(
+    settings.database_url,
+    echo=settings.debug_mode,  # Log SQL in debug mode
+    future=True,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+)
+
+# Create async session factory
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+
+# Base class for all models
+class Base(DeclarativeBase):
     """
-    Get the global Supabase client instance (singleton pattern).
+    Base class for SQLAlchemy models.
 
-    Creates the client on first call using service role key for backend operations.
-    This client bypasses Row Level Security (RLS) policies - use with extreme caution.
+    All models should inherit from this class.
+    Provides:
+    - Automatic table name generation (lowercase class name)
+    - Common columns via mixins (id, created_at, updated_at)
+    - Declarative mapping
+    """
+    pass
 
-    Returns:
-        Client: Authenticated Supabase client with service role privileges
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Dependency injection for FastAPI routes.
+
+    Provides a database session that is automatically closed after use.
+
+    Yields:
+        AsyncSession: Database session for async operations
+
+    Example:
+        @app.get("/users/{user_id}")
+        async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):
+            result = await db.execute(select(User).where(User.id == user_id))
+            return result.scalar_one_or_none()
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+
+
+async def init_db() -> None:
+    """
+    Initialize database connection.
+
+    Use this on application startup to verify database connectivity.
+    This does NOT create tables - use Alembic migrations for that.
 
     Raises:
-        ValueError: If Supabase configuration is invalid
-
-    Example:
-        >>> client = get_supabase_client()
-        >>> response = client.table('todos').select('*').execute()
+        Exception: If database connection fails
     """
-    global _supabase_client
-
-    if _supabase_client is None:
-        settings = get_settings()
-
-        # Validate configuration
-        if not settings.supabase_url or not settings.supabase_url.startswith("https://"):
-            raise ValueError(
-                f"Invalid SUPABASE_URL: must start with 'https://', got: {settings.supabase_url}"
-            )
-
-        if not settings.supabase_service_role_key:
-            raise ValueError(
-                "SUPABASE_SERVICE_ROLE_KEY is not configured. "
-                "Please set it in your .env file."
-            )
-
-        # Create Supabase client with service role key
-        _supabase_client = create_client(
-            supabase_url=settings.supabase_url,
-            supabase_key=settings.supabase_service_role_key
-        )
-
-    return _supabase_client
+    async with engine.begin() as conn:
+        # Test connection
+        await conn.execute("SELECT 1")
 
 
-def reset_supabase_client():
+async def close_db() -> None:
     """
-    Reset the global Supabase client instance.
+    Close database connections.
 
-    This is primarily used for testing purposes to force re-initialization
-    with different configuration. Not recommended for production use.
-
-    Example:
-        >>> reset_supabase_client()
-        >>> client = get_supabase_client()  # Creates new instance
+    Use this on application shutdown to gracefully close connections.
     """
-    global _supabase_client
-    _supabase_client = None
+    await engine.dispose()
 
 
 # ============================================================================
@@ -83,58 +108,68 @@ def reset_supabase_client():
 # ============================================================================
 
 """
-SUPABASE CLIENT SECURITY RULES
-===============================
+NEON POSTGRESQL SECURITY RULES
+================================
 
-1. SERVICE ROLE KEY PRIVILEGES
-   - The client returned by get_supabase_client() has service role privileges
-   - It bypasses Row Level Security (RLS) policies
-   - It can read/write ANY data in the database
-   - Use ONLY for operations that require cross-user access or JWT verification
+1. DATABASE URL SECURITY
+   - DATABASE_URL contains sensitive credentials (username, password)
+   - MUST be loaded from environment variables only
+   - NEVER commit to version control
+   - MUST use SSL (sslmode=require in connection string)
 
-2. WHEN TO USE THIS CLIENT
-   - JWT token verification (auth_service.py)
-   - Admin operations that need to access all users' data
-   - Background jobs that run with elevated privileges
-   - Data migration scripts
+2. CONNECTION POOLING
+   - SQLAlchemy manages connection pooling automatically
+   - pool_pre_ping checks connection health before use
+   - pool_recycle prevents stale connections
+   - Configure pool size based on your load
 
-3. WHEN NOT TO USE THIS CLIENT
-   - Regular user CRUD operations (use user's JWT context instead)
-   - Frontend-facing API endpoints that should enforce RLS
-   - Any operation where user isolation is required
+3. SESSION MANAGEMENT
+   - Use get_db() dependency injection for FastAPI routes
+   - Sessions are automatically committed on success
+   - Sessions are automatically rolled back on error
+   - Sessions are automatically closed after use
 
-4. DEFENSE IN DEPTH
-   - Even though this client bypasses RLS, always filter by user_id in application logic
-   - Never assume RLS will protect your data
-   - Implement user isolation at both application AND database layers
-   - Log all privileged operations for audit trails
+4. SQL INJECTION PREVENTION
+   - ALWAYS use SQLAlchemy ORM methods (never raw SQL)
+   - NEVER concatenate strings into queries
+   - ALWAYS use parameterized queries
+   - SQLAlchemy automatically escapes parameters
 
-5. PRODUCTION SECURITY
-   - Ensure SUPABASE_SERVICE_ROLE_KEY is set from environment variables
-   - Never commit .env file to version control
-   - Rotate service role key if accidentally exposed
-   - Monitor database access logs for suspicious activity
+5. USER DATA ISOLATION
+   - Enforce user_id filtering at application layer
+   - Never assume database-level security is enough
+   - Always validate user owns the data they're accessing
+   - Implement defense in depth
 
 EXAMPLE USAGE PATTERNS
-======================
+========================
 
-✅ CORRECT: JWT verification (backend-only operation)
-    client = get_supabase_client()
-    user = client.auth.get_user(token)
+✅ CORRECT: Using ORM with parameterized queries
+    result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = result.scalar_one_or_none()
 
-✅ CORRECT: Admin operations with explicit user filtering
-    client = get_supabase_client()
-    todos = client.table('todos').select('*').eq('user_id', user_id).execute()
+✅ CORRECT: Using dependency injection
+    @app.get("/users/{user_id}")
+    async def get_user(user_id: str, db: AsyncSession = Depends(get_db)):
+        result = await db.execute(select(User).where(User.id == user_id))
+        return result.scalar_one_or_none()
 
-❌ WRONG: Using without user_id filtering in user-facing endpoint
-    client = get_supabase_client()
-    todos = client.table('todos').select('*').execute()  # Returns ALL users' todos!
+✅ CORRECT: Explicit user filtering for data isolation
+    result = await db.execute(
+        select(Todo).where(Todo.user_id == current_user.id)
+    )
 
-❌ WRONG: Exposing client to frontend
-    # Never return the client instance in API responses
-    # Never include client configuration in frontend builds
+❌ WRONG: Raw SQL with string concatenation
+    sql = f"SELECT * FROM users WHERE id = '{user_id}'"  # SQL injection risk!
+    await db.execute(text(sql))
 
-For more information:
-- Supabase Python Client: https://supabase.com/docs/reference/python
-- RLS Policies: https://supabase.com/docs/guides/auth/row-level-security
+❌ WRONG: Forgetting to filter by user_id
+    result = await db.execute(select(Todo))  # Returns ALL users' todos!
+
+FOR MORE INFORMATION
+- Neon Docs: https://neon.tech/docs
+- SQLAlchemy Async: https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html
+- FastAPI Database: https://fastapi.tiangolo.com/tutorial/dependencies/
 """

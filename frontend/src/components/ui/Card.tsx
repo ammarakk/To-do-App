@@ -56,7 +56,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         onKeyDown={props.onClick ? (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            props.onClick?.(e as any);
+            // Use unknown intermediate type for type compatibility
+            const handler = props.onClick as unknown as (e: React.KeyboardEvent<HTMLDivElement>) => void;
+            handler(e);
           }
         } : undefined}
         {...props}

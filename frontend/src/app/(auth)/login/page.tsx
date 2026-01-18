@@ -1,3 +1,4 @@
+
 /**
  * Login Page
  *
@@ -14,12 +15,15 @@ export const metadata = {
   description: 'Sign in to your account to manage your todos',
 }
 
-export default function LoginPage({
+export const dynamic = 'force-dynamic'
+
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string; redirect?: string }
+  searchParams: Promise<{ error?: string; redirect?: string }>
 }) {
-  const errorMessage = searchParams?.error === 'session_expired'
+  const params = await searchParams
+  const errorMessage = params?.error === 'session_expired'
     ? 'Your session has expired. Please sign in again.'
     : null
 
@@ -86,7 +90,7 @@ export default function LoginPage({
               </div>
             </div>
           )}
-          <LoginForm initialRedirect={searchParams?.redirect} />
+          <LoginForm initialRedirect={params?.redirect} />
         </div>
       </div>
     </div>

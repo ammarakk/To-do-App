@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     // Optimize package imports
-    optimizePackageImports: ['@supabase/supabase-js'],
+    // optimizePackageImports: ['@supabase/supabase-js'], // Removed - Supabase no longer used
   },
 
   // Performance optimizations

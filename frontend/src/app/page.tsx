@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -33,7 +34,7 @@ export default function HomePage() {
         {/* Feature Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12" style={{ contentVisibility: 'auto' }}>
           <Card
-            variant="primary"
+            variant="neon-border"
             className="group"
           >
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 border border-cyan-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -60,7 +61,7 @@ export default function HomePage() {
           </Card>
 
           <Card
-            variant="secondary"
+            variant="neon-border"
             className="group"
           >
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-fuchsia-500/20 to-fuchsia-600/20 border border-fuchsia-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -87,7 +88,7 @@ export default function HomePage() {
           </Card>
 
           <Card
-            variant="accent"
+            variant="neon-border"
             className="group"
           >
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -120,22 +121,24 @@ export default function HomePage() {
             Start organizing your life with intelligent task management
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full">
-            <Button
-              href="/login"
-              variant="primary"
-              size="lg"
-              className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto min-h-[44px]"
-            >
-              Sign In
-            </Button>
-            <Button
-              href="/signup"
-              variant="secondary"
-              size="lg"
-              className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto min-h-[44px]"
-            >
-              Create Account
-            </Button>
+            <Link href="/login" className="w-full sm:w-auto">
+              <Button
+                variant="primary"
+                size="lg"
+                className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full min-h-[44px]"
+              >
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/signup" className="w-full sm:w-auto">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full min-h-[44px]"
+              >
+                Create Account
+              </Button>
+            </Link>
           </div>
         </div>
 

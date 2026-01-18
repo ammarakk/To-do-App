@@ -15,7 +15,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { logout } from '@/lib/auth-utils'
 
 interface LogoutButtonProps {
   /**
@@ -79,18 +79,11 @@ export default function LogoutButton({
     setIsLoading(true)
 
     try {
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut()
+      // Sign out from JWT backend
+      // TODO: Will be implemented in Task Group 5 - Auth Frontend
+      await logout()
 
-      if (error) {
-        console.error('Logout error:', error)
-        // Still redirect to home even if logout fails on server
-        // The client-side session will be cleared
-      }
-
-      // Redirect to home page
-      router.push('/')
-      router.refresh()
+      // Redirect to home page (logout() handles redirect)
     } catch (error) {
       console.error('Unexpected logout error:', error)
       // Redirect anyway

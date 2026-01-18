@@ -12,12 +12,14 @@ Security Rules:
 - User context is injected into route handlers
 """
 
-from typing import Dict, Any, Optional
-from fastapi import Depends, Header, HTTPException, status
+from typing import Optional
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from src.services.auth_service import get_user_from_token
+from models.database import get_db
+from services.auth_service import get_current_user as get_current_user_service
+from models.models import User
 
 
 # HTTPBearer security scheme for OpenAPI documentation
@@ -25,25 +27,23 @@ security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    authorization: Optional[HTTPAuthorizationCredentials] = Depends(security)
-) -> Dict[str, Any]:
+    authorization: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db)
+) -> User:
     """
     FastAPI dependency to extract and validate JWT from Authorization header.
 
     This dependency extracts the JWT token from the Authorization header,
-    verifies it with Supabase, and returns the user context. It must be
-    used in all protected routes.
+    verifies it, and returns the user object. It must be used in all
+    protected routes.
 
     Args:
         authorization: HTTPAuthorizationCredentials object containing the bearer token
                       (automatically extracted from Authorization header by FastAPI)
+        db: Database session (automatically injected by FastAPI)
 
     Returns:
-        Dict[str, Any]: User context with keys:
-            - user_id (str): User's UUID from Supabase Auth
-            - email (str): User's email address
-            - aud (str): Token audience (typically 'authenticated')
-            - role (str): User's role (typically 'authenticated')
+        User: Authenticated user object
 
     Raises:
         HTTPException: 401 if token is missing, invalid, or expired
@@ -55,15 +55,19 @@ async def get_current_user(
         >>> router = APIRouter()
         >>>
         >>> @router.get("/api/todos")
-        >>> async def get_todos(user: Dict = Depends(get_current_user)):
-        >>>     user_id = user['user_id']
+        >>> async def get_todos(user: User = Depends(get_current_user)):
+        >>>     user_id = user.id
         >>>     # Use user_id to filter todos
     """
     # Check if Authorization header is present
     if authorization is None or not authorization.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authorization header. Format: Authorization: Bearer <token>",
+            detail={
+                "code": "MISSING_AUTH_HEADER",
+                "message": "Missing authorization header. Format: Authorization: Bearer <token>",
+                "details": []
+            },
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -71,10 +75,9 @@ async def get_current_user(
     token = authorization.credentials
 
     try:
-        # Verify token and extract user context
-        user_context = get_user_from_token(token)
-
-        return user_context
+        # Verify token and get user from database
+        user = await get_current_user_service(db, token)
+        return user
 
     except HTTPException:
         # Re-raise HTTP exceptions from auth_service
@@ -84,14 +87,19 @@ async def get_current_user(
         # Catch any unexpected errors
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Authentication failed: {str(e)}",
+            detail={
+                "code": "AUTH_FAILED",
+                "message": f"Authentication failed: {str(e)}",
+                "details": []
+            },
             headers={"WWW-Authenticate": "Bearer"},
         )
 
 
 async def get_current_user_optional(
-    authorization: Optional[HTTPAuthorizationCredentials] = Depends(security)
-) -> Optional[Dict[str, Any]]:
+    authorization: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
     """
     Optional version of get_current_user that returns None if no token provided.
 
@@ -102,9 +110,10 @@ async def get_current_user_optional(
     Args:
         authorization: HTTPAuthorizationCredentials object containing the bearer token
                       (automatically extracted from Authorization header by FastAPI)
+        db: Database session (automatically injected by FastAPI)
 
     Returns:
-        Optional[Dict[str, Any]]: User context if token is valid, None if missing/invalid
+        Optional[User]: User object if token is valid, None if missing/invalid
 
     Example:
         >>> from fastapi import APIRouter, Depends
@@ -113,10 +122,10 @@ async def get_current_user_optional(
         >>> router = APIRouter()
         >>>
         >>> @router.get("/api/public-data")
-        >>> async def get_public_data(user: Optional[Dict] = Depends(get_current_user_optional)):
+        >>> async def get_public_data(user: Optional[User] = Depends(get_current_user_optional)):
         >>>     if user:
         >>>         # Authenticated user - return personalized data
-        >>>         user_id = user['user_id']
+        >>>         user_id = user.id
         >>>     else:
         >>>         # Anonymous user - return generic data
     """
@@ -128,9 +137,9 @@ async def get_current_user_optional(
     token = authorization.credentials
 
     try:
-        # Try to verify token and extract user context
-        user_context = get_user_from_token(token)
-        return user_context
+        # Try to verify token and get user
+        user = await get_current_user_service(db, token)
+        return user
 
     except HTTPException:
         # If token is invalid, return None instead of raising
@@ -154,15 +163,16 @@ HOW TO USE THESE DEPENDENCIES
 
     from fastapi import APIRouter, Depends
     from src.api.deps import get_current_user
+    from models.models import User
 
     router = APIRouter()
 
     @router.get("/api/todos")
-    async def get_todos(user: Dict = Depends(get_current_user)):
-        user_id = user['user_id']
-        email = user['email']
+    async def get_todos(user: User = Depends(get_current_user)):
+        user_id = user.id
+        email = user.email
         # Use user_id to filter data
-        return {"user_id": user_id, "email": email}
+        return {"user_id": str(user_id), "email": email}
 
     Result: Returns 401 if no token or invalid token provided
 
@@ -171,13 +181,14 @@ HOW TO USE THESE DEPENDENCIES
 
     from fastapi import APIRouter, Depends
     from src.api.deps import get_current_user_optional
+    from models.models import User
 
     router = APIRouter()
 
     @router.get("/api/public-data")
-    async def get_public_data(user: Optional[Dict] = Depends(get_current_user_optional)):
+    async def get_public_data(user: Optional[User] = Depends(get_current_user_optional)):
         if user:
-            user_id = user['user_id']
+            user_id = user.id
             # Return personalized data
         else:
             # Return generic data
@@ -189,16 +200,17 @@ HOW TO USE THESE DEPENDENCIES
 
     from fastapi import APIRouter, Depends, Query
     from src.api.deps import get_current_user
+    from models.models import User
 
     router = APIRouter()
 
     @router.get("/api/todos/{todo_id}")
     async def get_todo(
         todo_id: str,
-        user: Dict = Depends(get_current_user),
+        user: User = Depends(get_current_user),
         include_deleted: bool = Query(False)
     ):
-        user_id = user['user_id']
+        user_id = user.id
         # Get specific todo for user
 
 4. OPENAPI DOCUMENTATION
@@ -210,15 +222,15 @@ HOW TO USE THESE DEPENDENCIES
 AUTHENTICATION FLOW
 ===================
 
-1. User logs in via Supabase Auth (frontend)
-2. Frontend receives JWT token from Supabase
-3. Frontend stores token (handled by Supabase client)
+1. User logs in via /api/auth/login
+2. Frontend receives JWT access token and refresh token
+3. Frontend stores tokens in localStorage
 4. Frontend makes API request with header:
    Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 5. FastAPI extracts token via get_current_user dependency
-6. Token is verified with Supabase (auth_service.py)
-7. User context is injected into route handler
-8. Route uses user_id to filter data
+6. Token is verified with JWT (auth_service.py)
+7. User object is injected into route handler
+8. Route uses user.id to filter data
 
 ERROR RESPONSES
 ===============
@@ -226,15 +238,21 @@ ERROR RESPONSES
 All authentication errors return 401 Unauthorized:
 
     {
-        "detail": "Missing authorization header. Format: Authorization: Bearer <token>"
+        "code": "MISSING_AUTH_HEADER",
+        "message": "Missing authorization header. Format: Authorization: Bearer <token>",
+        "details": []
     }
 
     {
-        "detail": "Invalid token: signature verification failed"
+        "code": "INVALID_TOKEN",
+        "message": "Invalid token: signature verification failed",
+        "details": []
     }
 
     {
-        "detail": "Invalid token: token expired"
+        "code": "TOKEN_EXPIRED",
+        "message": "Invalid token: token expired",
+        "details": []
     }
 
 SECURITY BEST PRACTICES
@@ -242,7 +260,7 @@ SECURITY BEST PRACTICES
 
 ✅ DO:
 - Use get_current_user() on all protected routes
-- Filter all database queries by user_id
+- Filter all database queries by user_id (user.id)
 - Return 401 for authentication failures
 - Document protected routes in OpenAPI
 - Use HTTPS in production (required for JWT security)
@@ -259,17 +277,18 @@ EXAMPLE PROTECTED ROUTE
 
 Complete example of a protected endpoint:
 
-    from fastapi import APIRouter, Depends, HTTPException, status
+    from fastapi import APIRouter, Depends
     from src.api.deps import get_current_user
     from src.models.schemas import TodoResponse
+    from models.models import User
 
     router = APIRouter(prefix="/api/todos", tags=["todos"])
 
     @router.get("", response_model=list[TodoResponse])
     async def get_todos(
-        user: Dict = Depends(get_current_user)
+        user: User = Depends(get_current_user)
     ):
-        user_id = user['user_id']
+        user_id = user.id
 
         # Get todos for this user only (defense in depth)
         todos = await todo_service.get_todos(user_id=user_id)

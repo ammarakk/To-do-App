@@ -18,7 +18,6 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
 /**
  * Middleware function to handle authentication
@@ -26,45 +25,20 @@ import { createClient } from '@supabase/supabase-js'
  * This runs before every request to check if the user is authenticated.
  * If a user tries to access a protected route without authentication,
  * they will be redirected to the login page.
+ *
+ * NOTE: Currently allows all traffic during migration.
+ * JWT validation will be implemented in Task Groups 4-5.
  */
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
 
-  // Get environment variables
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase environment variables')
-    return res
-  }
-
-  // Create a Supabase client for middleware
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  })
-
-  // Get the access token from the request cookies
-  const accessToken = req.cookies.get('sb-access-token')?.value
-
-  let session = null
-
-  if (accessToken) {
-    try {
-      // Verify the token and get user session
-      const { data } = await supabase.auth.getUser(accessToken)
-      session = data.user
-    } catch (error) {
-      console.error('Error verifying token:', error)
-    }
-  }
+  // During Phase II-N migration, we'll check for JWT token in localStorage
+  // For now, allow all traffic - JWT middleware will be added later
+  // The actual authentication will be enforced by the backend API
 
   const { pathname } = req.nextUrl
 
-  // Define protected routes
+  // Define protected routes (will be enforced after JWT implementation)
   const protectedRoutes = ['/dashboard']
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
@@ -72,17 +46,12 @@ export async function middleware(req: NextRequest) {
   const authRoutes = ['/login', '/signup']
   const isAuthRoute = authRoutes.some(route => pathname === route)
 
-  // Redirect unauthenticated users from protected routes to login
-  if (isProtectedRoute && !session) {
-    const redirectUrl = new URL('/login', req.url)
-    redirectUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(redirectUrl)
-  }
+  // TODO: After JWT implementation, check for access_token in cookie
+  // const accessToken = req.cookies.get('access_token')?.value
+  // const session = await verifyToken(accessToken)
 
-  // Redirect authenticated users from auth routes to dashboard
-  if (isAuthRoute && session) {
-    return NextResponse.redirect(new URL('/dashboard', req.url))
-  }
+  // For now, allow all traffic - actual auth will be enforced by backend API
+  // Frontend will handle auth state via localStorage and API calls
 
   return res
 }

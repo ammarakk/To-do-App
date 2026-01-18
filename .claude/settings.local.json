@@ -20,7 +20,9 @@
       "Bash(Select-Object:*)",
       "Bash(ls:*)",
       "Bash(pwsh:*)",
-      "Bash(powershell.exe:*)"
+      "Bash(powershell.exe:*)",
+      "Bash(grep:*)",
+      "Bash(source:*)"
     ]
   }
 }

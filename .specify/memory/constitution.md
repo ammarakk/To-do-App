@@ -71,9 +71,9 @@
 - **Testing**: Jest + React Testing Library
 
 **Database & Auth**:
-- **Database**: **Supabase** (PostgreSQL)
-- **Auth**: **Supabase Auth** for user isolation
-- **ORM**: Supabase Python Client or SQL with supabase-py
+- **Database**: **Neon PostgreSQL** or **Supabase** (PostgreSQL) - Choice per project phase
+- **Auth**: **Custom JWT-based authentication** or **Supabase Auth** - Choice per project phase
+- **ORM**: SQLAlchemy (async) with asyncpg for Neon, or Supabase Python Client for Supabase
 
 **AI Agentic Stack**:
 - **Primary Agent**: Claude Code
@@ -88,7 +88,6 @@
 - **Runtime**: Dapr
 
 **Prohibited Technologies**:
-- Neon DB (use Supabase ONLY)
 - Express.js, Flask, Django (use FastAPI ONLY)
 - Pages Router (use App Router ONLY)
 - Any unauthorized MCP tools beyond Official MCP SDK
@@ -112,6 +111,13 @@
 - Database: Supabase PostgreSQL (replacing in-memory storage)
 - Auth: Supabase Auth for user isolation and data security
 - Deploy: Vercel (frontend) + appropriate backend hosting
+
+**Phase II-N: Neon PostgreSQL + BetterAuth Migration** (OPTIONAL)
+- Complete Supabase removal
+- Backend: FastAPI with async SQLAlchemy and Neon PostgreSQL
+- Auth: Custom JWT-based authentication (BetterAuth patterns)
+- Modern UI: Neon-inspired SaaS-grade design
+- Deploy: Vercel (frontend) + Railway/Render (backend)
 
 **Phase III: AI-Powered Todo Chatbot** (PLANNED)
 - Conversational interface using OpenAI Agents SDK
@@ -256,7 +262,8 @@
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
 | 1.0.0 | 2026-01-16 | Initial ratification with FastAPI, Supabase, and prompts-driven principles | System Architect |
+| 1.1.0 | 2026-01-18 | Phase II-N Technology Update: Permit Neon PostgreSQL and custom JWT auth as alternatives to Supabase. Add Phase II-N as optional migration path. Maintain backward compatibility with Phase II (Supabase). | System Architect |
 
 ---
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-16 | **Last Amended**: 2026-01-16
+**Version**: 1.1.0 | **Ratified**: 2026-01-16 | **Last Amended**: 2026-01-18

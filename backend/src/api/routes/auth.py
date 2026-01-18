@@ -1,22 +1,37 @@
 """
 Auth Routes Module
 
-This module defines FastAPI routes for authentication operations.
-Note: User authentication is handled by Supabase Auth on the frontend.
-These routes provide minimal auth-related endpoints for API consistency.
+This module defines FastAPI routes for JWT-based authentication operations.
+All authentication is handled by the backend with custom JWT tokens.
 
-Security Rules:
-- Auth operations primarily handled by Supabase client on frontend
-- Backend only validates JWTs issued by Supabase
-- No password storage or authentication logic in backend
+Security Features:
+- JWT access tokens (15 minutes expiry)
+- JWT refresh tokens (7 days expiry)
+- Token rotation on refresh
+- Password hashing with bcrypt (cost factor 12)
+- Token revocation on logout
 """
 
-from typing import Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_current_user
-from src.models.schemas import UserResponse, MessageResponse
+from models.database import get_db
+from models.schemas import (
+    UserCreate,
+    UserLogin,
+    RefreshTokenRequest,
+    TokenResponse,
+    UserResponse,
+    MessageResponse
+)
+from services.auth_service import (
+    register_user,
+    login_user,
+    refresh_tokens,
+    logout_user
+)
+from api.deps import get_current_user
+from models.models import User
 
 
 # Create router with prefix and tags
@@ -28,82 +43,254 @@ router = APIRouter(
 
 @router.post(
     "/signup",
-    response_model=MessageResponse,
-    status_code=status.HTTP_200_OK,
-    summary="User signup (placeholder)",
-    description="Placeholder endpoint for signup. Actual signup handled by Supabase Auth on frontend."
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new user",
+    description="Create a new user account with email and password. Returns JWT tokens."
 )
-async def signup() -> MessageResponse:
+async def signup(
+    user_data: UserCreate,
+    db: AsyncSession = Depends(get_db)
+) -> TokenResponse:
     """
-    Placeholder endpoint for user signup.
+    Register a new user and create JWT tokens.
 
-    Note: Actual user signup is handled by Supabase Auth on the frontend.
-    This endpoint exists for API consistency but returns a message directing
-    to Supabase Auth.
+    This endpoint creates a new user account with the provided email and password.
+    The password is hashed using bcrypt before storage. Returns both access and
+    refresh tokens for immediate login.
+
+    Args:
+        user_data: User registration data (email, password)
+        db: Database session
 
     Returns:
-        MessageResponse: Message explaining Supabase Auth usage
+        TokenResponse: Contains access_token, refresh_token, token_type, expires_in, and user info
+
+    Raises:
+        400: If email already exists
+        422: If validation fails (email format, password length)
+
+    Security:
+        - Password hashed with bcrypt (cost factor 12)
+        - Email validated with regex pattern
+        - Password minimum 8 characters
+        - User created as unverified (is_verified=False)
 
     Example:
         POST /api/auth/signup
-        Response: {"message": "Use Supabase Auth for user signup on frontend"}
+        {
+            "email": "user@example.com",
+            "password": "securepassword123"
+        }
+
+        Response:
+        {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "token_type": "bearer",
+            "expires_in": 900,
+            "user": {
+                "id": "uuid",
+                "email": "user@example.com",
+                "role": "user",
+                "is_verified": false
+            }
+        }
     """
-    return MessageResponse(
-        message="Use Supabase Auth for user signup. See frontend integration documentation."
+    # Register user (hashes password, creates user in DB)
+    user = await register_user(
+        db,
+        email=user_data.email,
+        password=user_data.password
     )
+
+    # Login user (create JWT tokens and session)
+    tokens = await login_user(
+        db,
+        email=user_data.email,
+        password=user_data.password
+    )
+
+    return tokens
 
 
 @router.post(
     "/login",
-    response_model=MessageResponse,
+    response_model=TokenResponse,
     status_code=status.HTTP_200_OK,
-    summary="User login (placeholder)",
-    description="Placeholder endpoint for login. Actual login handled by Supabase Auth on frontend."
+    summary="Login with email and password",
+    description="Authenticate with credentials and receive JWT tokens."
 )
-async def login() -> MessageResponse:
+async def login(
+    user_data: UserLogin,
+    db: AsyncSession = Depends(get_db)
+) -> TokenResponse:
     """
-    Placeholder endpoint for user login.
+    Login a user and create JWT tokens.
 
-    Note: Actual user login is handled by Supabase Auth on the frontend.
-    This endpoint exists for API consistency but returns a message directing
-    to Supabase Auth.
+    This endpoint authenticates a user with email and password.
+    If credentials are valid, it creates new access and refresh tokens.
+
+    Args:
+        user_data: User login data (email, password)
+        db: Database session
 
     Returns:
-        MessageResponse: Message explaining Supabase Auth usage
+        TokenResponse: Contains access_token, refresh_token, token_type, expires_in, and user info
+
+    Raises:
+        401: If email or password is incorrect
+
+    Security:
+        - Password verified against bcrypt hash
+        - Timing attack protection (bcrypt is slow)
+        - Generic error message (prevents user enumeration)
+        - Old refresh tokens invalidated on new login
 
     Example:
         POST /api/auth/login
-        Response: {"message": "Use Supabase Auth for user login on frontend"}
+        {
+            "email": "user@example.com",
+            "password": "securepassword123"
+        }
+
+        Response:
+        {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "token_type": "bearer",
+            "expires_in": 900,
+            "user": {
+                "id": "uuid",
+                "email": "user@example.com",
+                "role": "user",
+                "is_verified": false
+            }
+        }
     """
-    return MessageResponse(
-        message="Use Supabase Auth for user login. See frontend integration documentation."
+    # Login user (verifies password, creates JWT tokens)
+    tokens = await login_user(
+        db,
+        email=user_data.email,
+        password=user_data.password
     )
+
+    return tokens
+
+
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Refresh access token",
+    description="Get a new access token using a valid refresh token."
+)
+async def refresh(
+    refresh_data: RefreshTokenRequest,
+    db: AsyncSession = Depends(get_db)
+) -> TokenResponse:
+    """
+    Refresh access token using refresh token.
+
+    This endpoint validates the refresh token and issues a new access token
+    and refresh token. The old refresh token is revoked (token rotation).
+
+    Args:
+        refresh_data: Refresh token request
+        db: Database session
+
+    Returns:
+        TokenResponse: Contains new access_token, new refresh_token, token_type, expires_in, and user info
+
+    Raises:
+        401: If refresh token is invalid, expired, or revoked
+
+    Security:
+        - Refresh token validated against database
+        - Old refresh token immediately revoked
+        - New refresh token generated (token rotation)
+        - Prevents token reuse attacks
+        - All old tokens invalidated on new login
+
+    Example:
+        POST /api/auth/refresh
+        {
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+
+        Response:
+        {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "token_type": "bearer",
+            "expires_in": 900,
+            "user": {
+                "id": "uuid",
+                "email": "user@example.com",
+                "role": "user",
+                "is_verified": false
+            }
+        }
+    """
+    # Refresh tokens (validates refresh token, creates new tokens, revokes old token)
+    tokens = await refresh_tokens(
+        db,
+        refresh_token=refresh_data.refresh_token
+    )
+
+    return tokens
 
 
 @router.post(
     "/logout",
     response_model=MessageResponse,
     status_code=status.HTTP_200_OK,
-    summary="User logout (placeholder)",
-    description="Placeholder endpoint for logout. Actual logout handled by Supabase Auth on frontend."
+    summary="Logout current user",
+    description="Revoke the refresh token and logout the user."
 )
-async def logout() -> MessageResponse:
+async def logout(
+    refresh_data: RefreshTokenRequest,
+    db: AsyncSession = Depends(get_db)
+) -> MessageResponse:
     """
-    Placeholder endpoint for user logout.
+    Logout a user by revoking their refresh token.
 
-    Note: Actual user logout is handled by Supabase Auth on the frontend.
-    This endpoint exists for API consistency but returns a message directing
-    to Supabase Auth.
+    This endpoint revokes the provided refresh token in the database.
+    The access token will expire naturally (15 minutes). Frontend should
+    delete both tokens from storage.
+
+    Args:
+        refresh_data: Refresh token to revoke
+        db: Database session
 
     Returns:
-        MessageResponse: Message explaining Supabase Auth usage
+        MessageResponse: Success message
+
+    Security:
+        - Refresh token revoked in database
+        - All user sessions revoked (not just this token)
+        - Access token expires naturally (cannot be revoked instantly)
+        - Generic success response (prevents token enumeration)
 
     Example:
         POST /api/auth/logout
-        Response: {"message": "Use Supabase Auth for user logout on frontend"}
+        {
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        }
+
+        Response:
+        {
+            "message": "Successfully logged out"
+        }
     """
+    # Logout user (revokes all refresh tokens)
+    await logout_user(
+        db,
+        refresh_token=refresh_data.refresh_token
+    )
+
     return MessageResponse(
-        message="Use Supabase Auth for user logout. See frontend integration documentation."
+        message="Successfully logged out"
     )
 
 
@@ -115,31 +302,41 @@ async def logout() -> MessageResponse:
     description="Get information about the currently authenticated user."
 )
 async def get_current_user_info(
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ) -> UserResponse:
     """
     Get information about the currently authenticated user.
 
-    This endpoint validates the JWT token and returns user information.
+    This endpoint validates the JWT access token and returns user information
+    from the database.
 
     Args:
-        current_user: Authenticated user context (injected from JWT)
+        current_user: Authenticated user object (injected from JWT)
 
     Returns:
-        UserResponse: Current user information (id, email, timestamps)
+        UserResponse: Current user information (id, email, role, timestamps)
 
     Raises:
-        401: If JWT token is missing or invalid
+        401: If JWT access token is missing or invalid
+
+    Security:
+        - JWT access token validated
+        - User fetched from database (fresh data)
+        - No password_hash returned
+        - Token must be valid (not expired)
 
     Example:
         GET /api/auth/me
-        Headers: Authorization: Bearer <jwt_token>
-        Response: {"id": "uuid", "email": "user@example.com", ...}
+        Headers: Authorization: Bearer <access_token>
+
+        Response:
+        {
+            "id": "uuid",
+            "email": "user@example.com",
+            "role": "user",
+            "is_verified": false,
+            "created_at": "2024-01-18T10:30:00Z",
+            "updated_at": "2024-01-18T10:30:00Z"
+        }
     """
-    # Return user info from JWT
-    return UserResponse(
-        id=current_user["user_id"],
-        email=current_user["email"],
-        created_at=__import__("datetime").datetime.now(),  # Placeholder - would come from DB
-        updated_at=__import__("datetime").datetime.now()   # Placeholder - would come from DB
-    )
+    return UserResponse.model_validate(current_user)

@@ -6,25 +6,27 @@ All routes require JWT authentication and enforce user isolation.
 
 Security Rules:
 - All routes require valid JWT token via get_current_user dependency
-- user_id extracted from JWT, never from request body
+- user_id extracted from User object, never from request body
 - All operations filtered by user_id in service layer
 - Proper HTTP status codes for all scenarios
 """
 
-from typing import Optional, Dict, Any
+from typing import Optional
 from fastapi import APIRouter, Depends, Query, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.deps import get_current_user
-from src.services.todo_service import get_todo_service
-from src.models.schemas import (
+from api.deps import get_current_user
+from models.database import get_db
+from models.models import User
+from models.schemas import (
     TodoCreate,
     TodoUpdate,
     TodoResponse,
     PaginatedResponse,
     DeleteResponse,
 )
-from src.models.schemas import TodoStatus, TodoPriority
+from models.schemas import TodoStatus, TodoPriority
+import services.todo_service as todo_service
 
 
 # Create router with prefix and tags
@@ -43,14 +45,16 @@ router = APIRouter(
 )
 async def create_todo(
     todo_data: TodoCreate,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> TodoResponse:
     """
     Create a new todo for the authenticated user.
 
     Args:
         todo_data: Todo creation data validated by TodoCreate schema
-        current_user: Authenticated user context (injected from JWT)
+        current_user: Authenticated user object (injected from JWT)
+        db: Database session
 
     Returns:
         TodoResponse: Created todo with all fields including generated id
@@ -65,12 +69,12 @@ async def create_todo(
         - Todo automatically assigned to authenticated user
         - User cannot override user_id
     """
-    # Extract user_id from JWT
-    user_id = current_user["user_id"]
-
     # Create todo via service layer
-    service = get_todo_service()
-    todo = service.create_todo(user_id=user_id, todo_data=todo_data)
+    todo = await todo_service.create_todo(
+        db=db,
+        user_id=current_user.id,
+        todo_data=todo_data
+    )
 
     return TodoResponse(**todo)
 
@@ -89,7 +93,8 @@ async def get_todos(
     status_filter: Optional[TodoStatus] = Query(None, alias="status", description="Filter by status"),
     priority_filter: Optional[TodoPriority] = Query(None, alias="priority", description="Filter by priority"),
     category_filter: Optional[str] = Query(None, alias="category", description="Filter by category"),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> PaginatedResponse:
     """
     Get todos for the authenticated user with pagination and filtering.
@@ -101,7 +106,8 @@ async def get_todos(
         status_filter: Filter by status (optional)
         priority_filter: Filter by priority (optional)
         category_filter: Filter by category (optional)
-        current_user: Authenticated user context (injected from JWT)
+        current_user: Authenticated user object (injected from JWT)
+        db: Database session
 
     Returns:
         PaginatedResponse: Paginated list of todos with metadata
@@ -113,19 +119,16 @@ async def get_todos(
     Security:
         - Requires valid JWT token
         - Only returns todos belonging to authenticated user
-        - RLS policies + service layer filtering ensure user isolation
+        - Service layer filtering ensures user isolation
     """
-    # Extract user_id from JWT
-    user_id = current_user["user_id"]
-
     # Convert enums to strings if provided
     status_str = status_filter.value if status_filter else None
     priority_str = priority_filter.value if priority_filter else None
 
     # Get todos via service layer
-    service = get_todo_service()
-    todos, total = service.get_todos(
-        user_id=user_id,
+    todos, total = await todo_service.get_todos(
+        db=db,
+        user_id=current_user.id,
         page=page,
         page_size=page_size,
         search=search,
@@ -158,14 +161,16 @@ async def get_todos(
 )
 async def get_todo_by_id(
     todo_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> TodoResponse:
     """
     Get a specific todo by ID for the authenticated user.
 
     Args:
         todo_id: Todo's UUID
-        current_user: Authenticated user context (injected from JWT)
+        current_user: Authenticated user object (injected from JWT)
+        db: Database session
 
     Returns:
         TodoResponse: Todo with all fields
@@ -180,12 +185,12 @@ async def get_todo_by_id(
         - Only returns todo if it belongs to authenticated user
         - Service layer filters by user_id
     """
-    # Extract user_id from JWT
-    user_id = current_user["user_id"]
-
     # Get todo via service layer
-    service = get_todo_service()
-    todo = service.get_todo_by_id(user_id=user_id, todo_id=todo_id)
+    todo = await todo_service.get_todo_by_id(
+        db=db,
+        user_id=current_user.id,
+        todo_id=todo_id
+    )
 
     return TodoResponse(**todo)
 
@@ -200,7 +205,8 @@ async def get_todo_by_id(
 async def update_todo(
     todo_id: str,
     todo_data: TodoUpdate,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> TodoResponse:
     """
     Update a todo by ID for the authenticated user.
@@ -208,7 +214,8 @@ async def update_todo(
     Args:
         todo_id: Todo's UUID
         todo_data: Todo update data (all fields optional)
-        current_user: Authenticated user context (injected from JWT)
+        current_user: Authenticated user object (injected from JWT)
+        db: Database session
 
     Returns:
         TodoResponse: Updated todo with all fields
@@ -224,12 +231,13 @@ async def update_todo(
         - Only updates todos belonging to authenticated user
         - User cannot modify user_id field
     """
-    # Extract user_id from JWT
-    user_id = current_user["user_id"]
-
     # Update todo via service layer
-    service = get_todo_service()
-    todo = service.update_todo(user_id=user_id, todo_id=todo_id, todo_data=todo_data)
+    todo = await todo_service.update_todo(
+        db=db,
+        user_id=current_user.id,
+        todo_id=todo_id,
+        todo_data=todo_data
+    )
 
     return TodoResponse(**todo)
 
@@ -243,14 +251,16 @@ async def update_todo(
 )
 async def delete_todo(
     todo_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> DeleteResponse:
     """
     Delete a todo by ID for the authenticated user.
 
     Args:
         todo_id: Todo's UUID
-        current_user: Authenticated user context (injected from JWT)
+        current_user: Authenticated user object (injected from JWT)
+        db: Database session
 
     Returns:
         DeleteResponse: Confirmation message with deleted todo id
@@ -265,12 +275,12 @@ async def delete_todo(
         - Only deletes todos belonging to authenticated user
         - Service layer filters by user_id
     """
-    # Extract user_id from JWT
-    user_id = current_user["user_id"]
-
     # Delete todo via service layer
-    service = get_todo_service()
-    deleted_todo = service.delete_todo(user_id=user_id, todo_id=todo_id)
+    deleted_todo = await todo_service.delete_todo(
+        db=db,
+        user_id=current_user.id,
+        todo_id=todo_id
+    )
 
     return DeleteResponse(
         message="Todo deleted successfully",
@@ -287,14 +297,16 @@ async def delete_todo(
 )
 async def mark_todo_completed(
     todo_id: str,
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
 ) -> TodoResponse:
     """
     Mark a todo as completed for the authenticated user.
 
     Args:
         todo_id: Todo's UUID
-        current_user: Authenticated user context (injected from JWT)
+        current_user: Authenticated user object (injected from JWT)
+        db: Database session
 
     Returns:
         TodoResponse: Updated todo with status="completed"
@@ -309,11 +321,11 @@ async def mark_todo_completed(
         - Only updates todos belonging to authenticated user
         - Service layer filters by user_id
     """
-    # Extract user_id from JWT
-    user_id = current_user["user_id"]
-
     # Mark as completed via service layer
-    service = get_todo_service()
-    todo = service.mark_completed(user_id=user_id, todo_id=todo_id)
+    todo = await todo_service.mark_completed(
+        db=db,
+        user_id=current_user.id,
+        todo_id=todo_id
+    )
 
     return TodoResponse(**todo)

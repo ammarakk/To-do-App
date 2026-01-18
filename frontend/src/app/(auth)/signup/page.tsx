@@ -14,6 +14,8 @@ export const metadata = {
   description: 'Create a new account to start managing your todos',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col justify-center bg-gray-950 py-12 sm:px-6 lg:px-8">

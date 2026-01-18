@@ -17,7 +17,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { login } from '@/lib/auth-utils'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Eye, EyeOff } from 'lucide-react'
@@ -96,34 +96,18 @@ export default function LoginForm({ initialRedirect }: LoginFormProps) {
     setIsLoading(true)
 
     try {
-      // Authenticate with Supabase
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      })
+      // Authenticate with JWT backend
+      // TODO: Will be implemented in Task Group 5 - Auth Frontend
+      const user = await login(formData.email, formData.password)
 
-      if (error) {
-        // Handle specific error messages
-        if (error.message.includes('Invalid login credentials')) {
-          setErrors({ general: 'Invalid email or password' })
-        } else if (error.message.includes('Email not confirmed')) {
-          setErrors({ general: 'Please confirm your email address' })
-        } else {
-          setErrors({ general: 'An error occurred during login. Please try again.' })
-        }
-        return
-      }
-
-      if (data.user) {
-        // Successful login - redirect to todos page or initial redirect
-        const redirectPath = initialRedirect || '/todos'
-        router.push(redirectPath)
-        router.refresh()
-      }
+      // Successful login - redirect to todos page or initial redirect
+      const redirectPath = initialRedirect || '/todos'
+      router.push(redirectPath)
+      router.refresh()
     } catch (error) {
-      // Unexpected error
-      console.error('Login error:', error)
-      setErrors({ general: 'An unexpected error occurred. Please try again.' })
+      // Handle error messages
+      const errorMsg = error instanceof Error ? error.message : 'An error occurred during login. Please try again.'
+      setErrors({ general: errorMsg })
     } finally {
       setIsLoading(false)
     }

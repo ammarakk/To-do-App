@@ -190,6 +190,12 @@ class TodoResponse(BaseModel):
 # User Schemas
 # ============================================================================
 
+class UserRole(str, Enum):
+    """User role enumeration"""
+    USER = "user"
+    ADMIN = "admin"
+
+
 class UserResponse(BaseModel):
     """
     Schema for User API responses.
@@ -204,6 +210,14 @@ class UserResponse(BaseModel):
         ...,
         description="User email address"
     )
+    role: UserRole = Field(
+        default=UserRole.USER,
+        description="User role"
+    )
+    is_verified: bool = Field(
+        default=False,
+        description="Whether the user's email has been verified"
+    )
     created_at: datetime = Field(
         ...,
         description="Account creation timestamp"
@@ -215,6 +229,65 @@ class UserResponse(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
+    )
+
+
+class UserCreate(BaseModel):
+    """Schema for user registration"""
+    email: str = Field(
+        ...,
+        pattern=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+        description="User email address"
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=100,
+        description="Password (min 8 characters)"
+    )
+
+
+class UserLogin(BaseModel):
+    """Schema for user login"""
+    email: str = Field(
+        ...,
+        description="User email address"
+    )
+    password: str = Field(
+        ...,
+        description="User password"
+    )
+
+
+class RefreshTokenRequest(BaseModel):
+    """Schema for token refresh"""
+    refresh_token: str = Field(
+        ...,
+        description="Valid refresh token"
+    )
+
+
+class TokenResponse(BaseModel):
+    """Schema for token response"""
+    access_token: str = Field(
+        ...,
+        description="JWT access token"
+    )
+    refresh_token: str = Field(
+        ...,
+        description="JWT refresh token"
+    )
+    token_type: str = Field(
+        default="bearer",
+        description="Token type (always 'bearer')"
+    )
+    expires_in: int = Field(
+        ...,
+        description="Access token expiry in seconds"
+    )
+    user: UserResponse = Field(
+        ...,
+        description="User information"
     )
 
 

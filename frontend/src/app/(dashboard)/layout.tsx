@@ -17,7 +17,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { isAuthenticated as checkIsAuthenticated, getCurrentUser } from '@/lib/auth-utils'
 import Navbar from '@/components/layout/Navbar'
 
 export default function DashboardLayout({
@@ -32,21 +32,23 @@ export default function DashboardLayout({
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
   /**
-   * Check authentication status on mount using Supabase
+   * Check authentication status on mount using JWT
+   * TODO: Will be fully implemented in Task Group 5 - Auth Frontend
    */
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Check if user is authenticated with Supabase
-        const { data: { session } } = await supabase.auth.getSession()
+        // Check if user is authenticated with JWT
+        const authenticated = checkIsAuthenticated()
 
-        if (!session) {
+        if (!authenticated) {
           router.push('/login')
           return
         }
 
-        // Get user email from session
-        setUserEmail(session.user.email || null)
+        // Get user email from localStorage
+        const user = await getCurrentUser()
+        setUserEmail(user?.email || null)
         setIsAuthenticated(true)
       } catch (error) {
         console.error('Auth check error:', error)

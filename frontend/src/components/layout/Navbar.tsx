@@ -15,11 +15,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import LogoutButton from '@/components/auth/LogoutButton'
-import { supabase } from '@/lib/supabase'
-import { onSessionChange } from '@/lib/auth-utils'
+import { getCurrentUser } from '@/lib/auth-utils'
 
 interface NavbarProps {
   userEmail?: string | null
@@ -27,41 +26,27 @@ interface NavbarProps {
 
 export default function Navbar({ userEmail: initialEmail }: NavbarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(initialEmail || null)
 
-  // Fetch current user email on mount and set up session listener
+  // Fetch current user email on mount
+  // TODO: In Task Group 5, set up session state change listener with JWT refresh
   useEffect(() => {
     const getUserEmail = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (user?.email) {
         setUserEmail(user.email)
       }
     }
     getUserEmail()
-
-    // Set up session state change listener
-    const unsubscribe = onSessionChange({
-      onTokenRefreshed: () => {
-        console.log('Token refreshed in Navbar')
-      },
-      onSignedOut: () => {
-        console.log('User signed out in Navbar')
-        setUserEmail(null)
-      },
-    })
-
-    // Cleanup on unmount
-    return () => {
-      unsubscribe()
-    }
   }, [])
 
   /**
    * Navigation items
    */
   const navItems = [
-    { name: 'Todos', href: '/todos', current: router.pathname === '/todos' },
+    { name: 'Todos', href: '/todos', current: pathname === '/todos' },
   ]
 
   return (

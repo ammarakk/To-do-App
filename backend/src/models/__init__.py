@@ -1,10 +1,17 @@
 """
 Models Module
 
-This module contains Pydantic schemas for request/response validation.
-Separates data validation logic from business logic.
+This module contains:
+- SQLAlchemy ORM models for database tables
+- Pydantic schemas for request/response validation
+- Database connection management
 
-Exported Schemas:
+SQLAlchemy Models:
+- User: User accounts with password hashing
+- Todo: Todo items with soft delete support
+- Session: JWT refresh token management
+
+Pydantic Schemas:
 - TodoCreate: Input schema for creating todos
 - TodoUpdate: Input schema for updating todos (all optional)
 - TodoResponse: Output schema for todo objects
@@ -13,21 +20,34 @@ Exported Schemas:
 - PaginatedResponse: Standard wrapper for paginated lists
 - MessageResponse: Simple success message
 - DeleteResponse: Confirmation for delete operations
-- TodoStatus: Enum for todo status (pending/completed)
-- TodoPriority: Enum for priority levels (low/medium/high)
 """
 
-from .schemas import (
-    # Enums
+# SQLAlchemy Models
+from .models import (
+    User,
+    Todo,
+    Session,
     TodoStatus,
     TodoPriority,
-    # Todo Schemas
+    UserRole,
+)
+
+# Database Connection
+from .database import (
+    Base,
+    get_db,
+    init_db,
+    close_db,
+)
+
+# Pydantic Schemas (TODO: Update schemas.py for new schema)
+from .schemas import (
+    TodoStatus as SchemaTodoStatus,
+    TodoPriority as SchemaTodoPriority,
     TodoCreate,
     TodoUpdate,
     TodoResponse,
-    # User Schemas
     UserResponse,
-    # Standard Response Schemas
     ErrorResponse,
     PaginatedResponse,
     MessageResponse,
@@ -35,18 +55,26 @@ from .schemas import (
 )
 
 __all__ = [
-    # Enums
+    # SQLAlchemy Models
+    "User",
+    "Todo",
+    "Session",
     "TodoStatus",
     "TodoPriority",
-    # Todo Schemas
+    "UserRole",
+    # Database
+    "Base",
+    "get_db",
+    "init_db",
+    "close_db",
+    # Pydantic Schemas
     "TodoCreate",
     "TodoUpdate",
     "TodoResponse",
-    # User Schemas
     "UserResponse",
-    # Standard Response Schemas
     "ErrorResponse",
     "PaginatedResponse",
     "MessageResponse",
     "DeleteResponse",
 ]
+

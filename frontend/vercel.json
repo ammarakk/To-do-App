@@ -4,15 +4,17 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://qoeukwadyoimaiwhiwng.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_S1MCU5TuspYRayo0UwTmZA_CDEO9B9K",
-    "NEXT_PUBLIC_API_URL": "https://qoeukwadyoimaiwhiwng.supabase.co"
+    "NEXT_PUBLIC_API_URL": "@backend-api-url"
   },
   "build": {
     "env": {
-      "NEXT_PUBLIC_SUPABASE_URL": "https://qoeukwadyoimaiwhiwng.supabase.co",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_S1MCU5TuspYRayo0UwTmZA_CDEO9B9K",
-      "NEXT_PUBLIC_API_URL": "https://qoeukwadyoimaiwhiwng.supabase.co"
+      "NEXT_PUBLIC_API_URL": "@backend-api-url"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "@backend-api-url/api/:path*"
+    }
+  ]
 }
