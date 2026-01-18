@@ -67,3 +67,26 @@ htmlcov/
 *.bak
 *.backup
 nul
+
+# Environment variables
+.env
+.env.local
+.env.production.local
+.env.*.local
+
+# Secrets
+*_secrets.py
+space_status.json
+set_hf_secrets.py
+update_hf_secrets.py
+upload_to_hf.py
+secrets/
+
+# HuggingFace temporary
+huggingface-deploy/.git/
+huggingface-deploy/nul
+
+# Test files
+test_backend.py
+*_test.py
+
