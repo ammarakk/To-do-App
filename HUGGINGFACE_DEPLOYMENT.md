@@ -53,7 +53,7 @@
 
    ```bash
    # Database (Neon PostgreSQL)
-   DATABASE_URL=postgresql+asyncpg://neondb_owner:npg_ChtFeYRd02nq@ep-lucky-meadow-abpkcyn6-pooler.eu-west-2.aws.neon.tech/neondb
+   DATABASE_URL=postgresql+asyncpg://neondb_owner:YOUR_PASSWORD_HERE@ep-lucky-meadow-abpkcyn6-pooler.eu-west-2.aws.neon.tech/neondb
 
    # JWT Secrets
    JWT_SECRET_KEY=yCv2cdpFTHtsZuqvn5Yl1QYCVGYDlvyo
