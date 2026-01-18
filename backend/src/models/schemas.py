@@ -218,12 +218,12 @@ class UserResponse(BaseModel):
         default=False,
         description="Whether the user's email has been verified"
     )
-    created_at: datetime = Field(
-        ...,
+    created_at: Optional[datetime] = Field(
+        None,
         description="Account creation timestamp"
     )
-    updated_at: datetime = Field(
-        ...,
+    updated_at: Optional[datetime] = Field(
+        None,
         description="Last update timestamp"
     )
 

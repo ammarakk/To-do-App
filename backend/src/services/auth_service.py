@@ -82,20 +82,27 @@ async def register_user(
     # Hash password
     password_hash = get_password_hash(password)
 
-    # Create new user
+    # Create new user with explicit timestamps
     new_user = User(
         id=uuid.uuid4(),
         email=email,
         password_hash=password_hash,
         role=role,
-        is_verified=False  # Can be verified later via email
+        is_verified=False,  # Can be verified later via email
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
     )
 
     db.add(new_user)
     await db.commit()
-    await db.refresh(new_user)
 
-    return new_user
+    # Query fresh user object to get all fields including timestamps
+    result = await db.execute(
+        select(User).where(User.id == new_user.id)
+    )
+    user = result.scalar_one()
+
+    return user
 
 
 async def authenticate_user(
@@ -195,7 +202,7 @@ async def login_user(
     )
 
     # Store refresh token in database
-    from config import get_settings
+    from src.config import get_settings
     settings = get_settings()
 
     expires_at = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
@@ -326,7 +333,7 @@ async def refresh_tokens(
     )
 
     # Store new refresh token
-    from config import get_settings
+    from src.config import get_settings
     settings = get_settings()
 
     expires_at = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)

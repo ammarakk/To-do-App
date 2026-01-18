@@ -208,7 +208,7 @@ class Session(Base, TimestampMixin):
         index=True
     )
     refresh_token: Mapped[str] = mapped_column(
-        String(255),
+        String(500),
         unique=True,
         index=True,
         nullable=False

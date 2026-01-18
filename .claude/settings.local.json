@@ -22,7 +22,8 @@
       "Bash(pwsh:*)",
       "Bash(powershell.exe:*)",
       "Bash(grep:*)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "Bash(powershell:*)"
     ]
   }
 }
