@@ -15,18 +15,18 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import get_current_user
-from models.database import get_db
-from models.models import User
-from models.schemas import (
+from src.api.deps import get_current_user
+from src.models.database import get_db
+from src.models.models import User
+from src.models.schemas import (
     TodoCreate,
     TodoUpdate,
     TodoResponse,
     PaginatedResponse,
     DeleteResponse,
 )
-from models.schemas import TodoStatus, TodoPriority
-import services.todo_service as todo_service
+from src.models.schemas import TodoStatus, TodoPriority
+import src.services.todo_service as todo_service
 
 
 # Create router with prefix and tags

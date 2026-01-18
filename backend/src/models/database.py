@@ -12,9 +12,10 @@ Uses async SQLAlchemy with asyncpg driver for optimal performance.
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import text
 from typing import AsyncGenerator
 
-from config import get_settings
+from src.config import get_settings
 
 
 # Get settings
@@ -91,7 +92,7 @@ async def init_db() -> None:
     """
     async with engine.begin() as conn:
         # Test connection
-        await conn.execute("SELECT 1")
+        await conn.execute(text("SELECT 1"))
 
 
 async def close_db() -> None:

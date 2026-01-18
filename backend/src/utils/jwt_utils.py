@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from config import get_settings
+from src.config import get_settings
 
 
 # Get settings

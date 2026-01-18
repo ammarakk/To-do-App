@@ -11,9 +11,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
-from config import get_settings
-from api.routes import todos, auth
-from models.database import init_db, close_db
+from src.config import get_settings
+from src.api.routes import todos, auth
+from src.models.database import init_db, close_db
 
 
 # Database lifespan manager
@@ -27,16 +27,16 @@ async def lifespan(app: FastAPI):
     # Startup: Initialize database connection
     try:
         await init_db()
-        print("✅ Database connection initialized")
+        print("[OK] Database connection initialized")
     except Exception as e:
-        print(f"❌ Database initialization failed: {e}")
+        print(f"[ERROR] Database initialization failed: {e}")
         raise
 
     yield
 
     # Shutdown: Close database connection
     await close_db()
-    print("✅ Database connection closed")
+    print("[OK] Database connection closed")
 
 
 # Create FastAPI application instance

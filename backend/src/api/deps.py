@@ -17,9 +17,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.database import get_db
-from services.auth_service import get_current_user as get_current_user_service
-from models.models import User
+from src.models.database import get_db
+from src.services.auth_service import get_current_user as get_current_user_service
+from src.models.models import User
 
 
 # HTTPBearer security scheme for OpenAPI documentation

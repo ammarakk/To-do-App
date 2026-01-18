@@ -9,8 +9,7 @@ import os
 from logging.config import fileConfig
 
 from sqlalchemy import pool
-from sqlalchemy.engine import Engine
-from sqlalchemy.ext.asyncio import async_engine_from_config, AsyncSession
+from sqlalchemy import create_engine
 
 from alembic import context
 
@@ -84,9 +83,8 @@ def run_migrations_online() -> None:
     # So we convert the async URL to sync URL for migrations
     sync_database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
 
-    connectable = Engine.from_config(
-        {"sqlalchemy.url": sync_database_url},
-        prefix="sqlalchemy.",
+    connectable = create_engine(
+        sync_database_url,
         poolclass=pool.NullPool,
     )
 

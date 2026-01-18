@@ -95,10 +95,16 @@ class Settings(BaseSettings):
 
     @validator("database_url")
     def validate_database_url(cls, v):
-        """Validate Neon database URL format."""
-        if not v.startswith("postgresql://") and not v.startswith("postgres://"):
+        """Validate Neon database URL format (supports async drivers)."""
+        valid_prefixes = [
+            "postgresql://",
+            "postgres://",
+            "postgresql+asyncpg://",
+            "postgres+asyncpg://"
+        ]
+        if not any(v.startswith(prefix) for prefix in valid_prefixes):
             raise ValueError(
-                f"database_url must start with 'postgresql://' or 'postgres://', got: {v[:20]}..."
+                f"database_url must start with 'postgresql://', 'postgres://', or async driver (postgresql+asyncpg://), got: {v[:20]}..."
             )
         return v
 

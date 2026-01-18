@@ -19,8 +19,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import select, func, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.models import Todo, TodoStatus, TodoPriority
-from models.schemas import TodoCreate, TodoUpdate
+from src.models.models import Todo, TodoStatus, TodoPriority
+from src.models.schemas import TodoCreate, TodoUpdate
 
 
 async def create_todo(

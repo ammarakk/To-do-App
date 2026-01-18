@@ -15,8 +15,8 @@ Security Features:
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.database import get_db
-from models.schemas import (
+from src.models.database import get_db
+from src.models.schemas import (
     UserCreate,
     UserLogin,
     RefreshTokenRequest,
@@ -24,14 +24,14 @@ from models.schemas import (
     UserResponse,
     MessageResponse
 )
-from services.auth_service import (
+from src.services.auth_service import (
     register_user,
     login_user,
     refresh_tokens,
     logout_user
 )
-from api.deps import get_current_user
-from models.models import User
+from src.api.deps import get_current_user
+from src.models.models import User
 
 
 # Create router with prefix and tags
