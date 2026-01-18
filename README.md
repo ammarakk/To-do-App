@@ -8,32 +8,30 @@ A professional full-stack todo application with authentication, built with Next.
 - **Framework**: Next.js 16 with App Router
 - **Language**: TypeScript
 - **UI**: Tailwind CSS with custom components
+- **Authentication**: better-auth
 - **State Management**: React hooks
-- **Authentication**: JWT with HTTP-only cookies
 
 ### Backend
 - **Framework**: FastAPI
 - **Language**: Python 3.11
 - **Database**: PostgreSQL (Neon)
 - **ORM**: SQLAlchemy (async)
-- **Authentication**: JWT tokens (access + refresh)
+- **Authentication**: better-auth integration
 - **Migrations**: Alembic
 
 ## ✨ Features
 
 ### Authentication
 - ✅ User signup with email/password
-- ✅ Secure login with JWT
-- ✅ Automatic token refresh
-- ✅ Password hashing with bcrypt
+- ✅ Secure login with better-auth
 - ✅ Session management
+- ✅ Password hashing with bcrypt
 
 ### Todo Management
 - ✅ Create, read, update, delete todos
 - ✅ Mark todos as completed
 - ✅ Priority levels (low, medium, high)
 - ✅ Categories for organization
-- ✅ Due dates
 - ✅ Search functionality
 - ✅ Filtering by status, priority, category
 - ✅ Pagination for large lists
@@ -60,7 +58,6 @@ to-do-app/
 │   │   ├── config.py      # Configuration
 │   │   └── main.py        # Application entry
 │   ├── alembic_migrations/# Database migrations
-│   ├── Dockerfile         # Container image
 │   ├── requirements.txt   # Python dependencies
 │   └── .env.example       # Environment template
 │
@@ -69,9 +66,10 @@ to-do-app/
 │   │   ├── app/          # App Router pages
 │   │   ├── components/   # React components
 │   │   ├── lib/          # Utilities & API client
+│   │   │   ├── better-auth.ts
+│   │   │   └── api.ts
 │   │   └── styles/       # CSS styles
 │   ├── package.json      # Node dependencies
-│   ├── tailwind.config.ts
 │   └── vercel.json       # Vercel deployment
 │
 └── README.md             # This file
@@ -83,6 +81,7 @@ to-do-app/
 - Node.js 18+
 - Python 3.11+
 - PostgreSQL database (Neon recommended)
+- Better-auth account
 
 ### 1. Clone the Repository
 ```bash
@@ -128,6 +127,10 @@ cd frontend
 # Install dependencies
 npm install
 
+# Setup better-auth
+# Create better-auth.config.ts in your project
+# Follow: https://www.better-auth.com/docs
+
 # Create environment file
 echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 
@@ -150,45 +153,31 @@ CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
 ### Frontend (.env.local)
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8000
+BETTER_AUTH_SECRET=your-better-auth-secret
+BETTER_AUTH_URL=http://localhost:3000
 ```
 
 ## 📦 Deployment
 
-### Backend Deployment Options
+### Backend
 
-#### Option 1: Railway.app (Recommended)
-```bash
-npm install -g @railway/cli
-railway login
-cd backend
-railway init
-railway add postgresql
-railway up
-```
-
-#### Option 2: Render.com
-- Create account at render.com
-- Connect GitHub repository
-- Add PostgreSQL database
-- Deploy as Web Service
-
-#### Option 3: Docker
+Deploy on any platform that supports Docker:
 ```bash
 cd backend
 docker build -t todo-backend .
 docker run -p 8000:8000 --env-file .env todo-backend
 ```
 
-### Frontend Deployment
+### Frontend
 
-#### Vercel (Recommended)
+Deploy on Vercel:
 ```bash
 cd frontend
 npm install -g vercel
 vercel
 ```
 
-Set `NEXT_PUBLIC_API_URL` to your deployed backend URL.
+Set environment variables in your deployment platform.
 
 ## 🧪 Testing
 
@@ -228,13 +217,12 @@ Once backend is running, visit:
 ## 🔒 Security Features
 
 - ✅ Password hashing with bcrypt
-- ✅ JWT authentication with access/refresh tokens
-- ✅ Automatic token refresh
+- ✅ JWT authentication with better-auth
 - ✅ User data isolation (user_id filtering)
 - ✅ CORS protection
 - ✅ SQL injection prevention (ORM)
 - ✅ Input validation (Pydantic)
-- ✅ HTTP-only cookies for tokens
+- ✅ Session management
 
 ## 🐛 Troubleshooting
 
@@ -262,7 +250,7 @@ Once backend is running, visit:
 - Commit messages: Conventional Commits
 
 ### Branching Strategy
-- `main` - Production-ready code (Phase 1 + Phase 2 complete)
+- `main` - Production-ready code
 - Feature branches - For new features
 
 ## 📄 License
@@ -279,4 +267,4 @@ For issues and questions, please open an issue on GitHub.
 
 ---
 
-**Built with ❤️ using Spec-Driven Development**
+**Built with ❤️ using better-auth and Neon PostgreSQL**
